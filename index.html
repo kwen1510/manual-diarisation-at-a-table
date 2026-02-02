@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f8fafc" />
+    <title>Minutes Taking App</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <h1>Minutes Taker</h1>
+        <span class="subtitle" id="currentDate">Monday, February 2, 2026</span>
+      </div>
+      <div class="topbar-center" id="stage1Controls">
+        <label class="inline-field compact">
+          <span>Session</span>
+          <input id="sessionName" type="text" placeholder="e.g. Project Sync" />
+        </label>
+        <button id="confirmSetupBtn" class="primary">Start Session</button>
+      </div>
+      <div class="topbar-center" id="stage2Controls" hidden>
+        <div class="rec-status-bar">
+          <span id="recStatus" class="rec-badge">Idle</span>
+          <span id="recTimer">00:00</span>
+        </div>
+        <div class="rec-speaker">
+          <strong id="currentSpeaker">None</strong>
+        </div>
+        <div class="rec-buttons">
+          <button id="startBtn" class="primary">Record</button>
+          <button id="stopBtn" class="danger" disabled>Stop</button>
+          <button id="replayBtn" class="ghost" disabled>Replay</button>
+          <button id="exportBtn" class="ghost" disabled>Export</button>
+          <button id="newSessionBtn" class="ghost-danger">New</button>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button id="historyBtn" class="icon-btn" title="Session History">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="left">
+        <div class="panel canvas-panel">
+          <div class="canvas-header">
+            <h2>Table Mode</h2>
+            <div class="canvas-hint" id="canvasHint">
+              Drag a person anywhere on the board to place them.
+            </div>
+          </div>
+          <div class="front-label">Front</div>
+          <div class="tables-controls">
+            <button id="addTableBtn" class="ghost">Add Table</button>
+            <button id="clearTablesBtn" class="ghost">Clear Tables</button>
+          </div>
+          <div id="canvas" class="canvas"></div>
+        </div>
+      </section>
+
+      <aside class="right">
+        <div class="panel people">
+          <div class="people-header">
+            <h2>People</h2>
+            <p id="peopleHint">Drag onto the board. Click to log speaker (Stage 2).</p>
+          </div>
+          <div id="peopleList" class="people-list"></div>
+        </div>
+        <div class="panel absent">
+          <div class="people-header">
+            <h2>Absent</h2>
+            <p>Drop here to mark absent.</p>
+          </div>
+          <div id="absentBox" class="absent-box">
+            <div id="absentList" class="absent-list"></div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <div id="historyModal" class="modal" hidden>
+      <div class="modal-content history-modal">
+        <button class="modal-close" id="closeHistoryBtn">&times;</button>
+        <div class="modal-header-simple">
+          <h2>Session History</h2>
+        </div>
+        <div class="history-list" id="historyList">
+          <p class="empty-state">No saved sessions yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="replayModal" class="modal" hidden>
+      <div class="modal-content replay-modal">
+        <button id="closeModalBtn" class="modal-close">&times;</button>
+        <div class="replay-layout">
+          <div class="replay-player">
+            <div class="replay-player-label">Audio</div>
+            <audio id="replayAudioModal" controls></audio>
+            <div class="replay-speaker-now">
+              <span class="speaker-label">Speaking:</span>
+              <strong id="modalCurrentSpeaker">—</strong>
+            </div>
+          </div>
+          <div class="replay-timeline">
+            <div class="timeline-header">Speaker Log</div>
+            <div class="timeline-log" id="timelineLog"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
