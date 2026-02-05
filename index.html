@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f8fafc" />
     <title>Minutes Taking App</title>
+    <link rel="icon" href="icon-192.svg" type="image/svg+xml" />
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -39,7 +40,7 @@
       </div>
       <div class="topbar-right">
         <button id="historyBtn" class="icon-btn" title="Session History">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <i data-lucide="clock"></i>
         </button>
       </div>
     </header>
@@ -53,12 +54,15 @@
               Drag a person anywhere on the board to place them.
             </div>
           </div>
-          <div class="front-label">Front</div>
           <div class="tables-controls">
-            <button id="addTableBtn" class="ghost">Add Table</button>
-            <button id="clearTablesBtn" class="ghost">Clear Tables</button>
+            <button id="addTableBtn" class="ghost btn-add-table">Add Oval Table</button>
+            <button id="addCircleBtn" class="ghost btn-add-circle">Add Circle Table</button>
+            <button id="addRectBtn" class="ghost btn-add-rect">Add Rectangle Table</button>
+            <button id="clearTablesBtn" class="danger">Clear Tables</button>
           </div>
-          <div id="canvas" class="canvas"></div>
+          <div id="canvas" class="canvas">
+            <div class="front-label">Front</div>
+          </div>
         </div>
       </section>
 
@@ -67,6 +71,31 @@
           <div class="people-header">
             <h2>People</h2>
             <p id="peopleHint">Drag onto the board. Click to log speaker (Stage 2).</p>
+          </div>
+          <div class="data-import" id="dataImport">
+            <div class="data-import-row">
+              <button id="csvPickBtn" class="ghost btn-upload-csv">Upload CSV</button>
+              <button id="photosPickBtn" class="ghost btn-upload-photos">Upload Photos</button>
+            </div>
+            <div class="data-import-row data-import-status-stack">
+              <span id="photosStatus" class="data-import-status">No photos loaded</span>
+              <span id="csvStatus" class="data-import-status">No CSV loaded</span>
+            </div>
+            <div class="data-import-row data-import-template">
+              <a id="csvTemplateLink" class="template-link" href="#">Download CSV Template</a>
+              <span class="data-import-status">
+                Use headers only. Name and photo_filename are required; alias is optional.
+              </span>
+            </div>
+            <p class="data-import-note">
+              The <strong>photo_filename</strong> must match the image filename exactly.
+            </p>
+            <input id="csvInput" type="file" accept=".csv,text/csv" hidden />
+            <input id="photosInput" type="file" accept="image/*" multiple hidden />
+          </div>
+          <div class="guest-add" id="guestAdd">
+            <input id="guestNameInput" type="text" placeholder="Add guest name" />
+            <button id="addGuestBtn" class="ghost">Add</button>
           </div>
           <div id="peopleList" class="people-list"></div>
         </div>
@@ -84,7 +113,9 @@
 
     <div id="historyModal" class="modal" hidden>
       <div class="modal-content history-modal">
-        <button class="modal-close" id="closeHistoryBtn">&times;</button>
+        <button class="modal-close" id="closeHistoryBtn" aria-label="Close history">
+          <i data-lucide="x"></i>
+        </button>
         <div class="modal-header-simple">
           <h2>Session History</h2>
         </div>
@@ -96,7 +127,9 @@
 
     <div id="replayModal" class="modal" hidden>
       <div class="modal-content replay-modal">
-        <button id="closeModalBtn" class="modal-close">&times;</button>
+        <button id="closeModalBtn" class="modal-close" aria-label="Close replay">
+          <i data-lucide="x"></i>
+        </button>
         <div class="replay-layout">
           <div class="replay-player">
             <div class="replay-player-label">Audio</div>
@@ -114,6 +147,20 @@
       </div>
     </div>
 
+    <div id="alertModal" class="modal" hidden>
+      <div class="modal-content alert-modal">
+        <button id="closeAlertBtn" class="modal-close" aria-label="Close alert">
+          <i data-lucide="x"></i>
+        </button>
+        <div class="alert-header">
+          <span id="alertBadge" class="alert-badge">Info</span>
+          <h2 id="alertTitle">Alert</h2>
+        </div>
+        <ul id="alertMessages" class="alert-messages"></ul>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="app.js"></script>
   </body>
 </html>

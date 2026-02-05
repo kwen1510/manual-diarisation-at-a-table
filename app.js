@@ -1,25 +1,3 @@
-const peopleSeed = [
-  "Ava Carter",
-  "Noah Brooks",
-  "Mia Rivera",
-  "Liam Patel",
-  "Evelyn Chen",
-  "Lucas Kim",
-  "Sophia Reyes",
-  "Ethan Blake",
-  "Isla Morgan",
-  "Mason Ortiz",
-  "Aria Singh",
-  "Leo Foster",
-  "Zoe Bennett",
-  "James Ward",
-  "Amelia Price",
-  "Elijah Stone",
-  "Harper Scott",
-  "Henry Walsh",
-  "Nora Diaz",
-  "Owen Hunt",
-];
 
 // IndexedDB for persistent audio storage
 const DB_NAME = "MinutesTakerDB";
@@ -114,6 +92,8 @@ function deleteAudioFromIndexedDB(sessionId) {
 }
 
 const TABLE_SIZE = { width: 240, height: 150 };
+const CIRCLE_SIZE = 150;
+const RECT_SIZE = { width: 220, height: 130 };
 const PERSON_SIZE = 72;
 
 const state = {
@@ -132,6 +112,10 @@ const state = {
   speakerLog: [],
   sessionHistory: [],
   currentSessionName: "",
+  guests: [],
+  membersData: [],
+  photoMap: new Map(),
+  photoUrls: [],
 };
 
 const elements = {
@@ -139,9 +123,22 @@ const elements = {
   canvas: document.getElementById("canvas"),
   canvasHint: document.getElementById("canvasHint"),
   addTableBtn: document.getElementById("addTableBtn"),
+  addCircleBtn: document.getElementById("addCircleBtn"),
+  addRectBtn: document.getElementById("addRectBtn"),
   clearTablesBtn: document.getElementById("clearTablesBtn"),
   peopleList: document.getElementById("peopleList"),
   peopleHint: document.getElementById("peopleHint"),
+  dataImport: document.getElementById("dataImport"),
+  guestAdd: document.getElementById("guestAdd"),
+  guestNameInput: document.getElementById("guestNameInput"),
+  addGuestBtn: document.getElementById("addGuestBtn"),
+  csvInput: document.getElementById("csvInput"),
+  csvPickBtn: document.getElementById("csvPickBtn"),
+  csvTemplateLink: document.getElementById("csvTemplateLink"),
+  csvStatus: document.getElementById("csvStatus"),
+  photosInput: document.getElementById("photosInput"),
+  photosPickBtn: document.getElementById("photosPickBtn"),
+  photosStatus: document.getElementById("photosStatus"),
   absentBox: document.getElementById("absentBox"),
   absentList: document.getElementById("absentList"),
   stage1Controls: document.getElementById("stage1Controls"),
@@ -190,14 +187,245 @@ function svgAvatar(name) {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
-function seedPeople() {
-  state.people = peopleSeed.map((name, index) => ({
-    id: `p-${index}`,
+function normalizeName(name) {
+  return name.trim().replace(/\s+/g, " ");
+}
+
+function createPerson(name, options = {}) {
+  const isGuest = Boolean(options.isGuest);
+  const avatar = options.avatar || svgAvatar(name);
+  return {
+    id:
+      options.id ||
+      `p-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     name,
-    avatar: svgAvatar(name),
+    avatar,
     placement: null,
     absent: false,
-  }));
+    isGuest,
+    alias: options.alias ?? "",
+    photoFilename: options.photoFilename ?? "",
+  };
+}
+
+function setPersonImage(img, person) {
+  img.src = person.avatar;
+  img.alt = person.name;
+  img.onerror = () => {
+    img.onerror = null;
+    img.src = svgAvatar(person.name);
+  };
+}
+
+function clearGuestStorage() {
+  localStorage.removeItem("minutesGuests");
+}
+
+function clearPhotoUrls() {
+  state.photoUrls.forEach((url) => URL.revokeObjectURL(url));
+  state.photoUrls = [];
+}
+
+function setPhotoMapFromFiles(files) {
+  clearPhotoUrls();
+  state.photoMap = new Map();
+  Array.from(files).forEach((file) => {
+    const url = URL.createObjectURL(file);
+    state.photoUrls.push(url);
+    state.photoMap.set(file.name, url);
+  });
+}
+
+function applyRoster(records, { showAlerts = true, extraWarnings = [] } = {}) {
+  const errors = [];
+  const warnings = [];
+  const people = [];
+  const seenNames = new Set();
+
+  records.forEach((record, index) => {
+    const row = index + 2;
+    const name = normalizeName(record.name || "");
+    if (!name) {
+      errors.push(`Row ${row}: missing name.`);
+      return;
+    }
+    const key = name.toLowerCase();
+    if (seenNames.has(key)) {
+      errors.push(`Row ${row}: duplicate name "${name}".`);
+      return;
+    }
+    seenNames.add(key);
+
+    const photoFilename = (record.photo_filename || "").trim();
+    if (!photoFilename) {
+      errors.push(`Row ${row}: missing photo_filename.`);
+      return;
+    }
+    let avatar = svgAvatar(name);
+    if (photoFilename) {
+      const match = state.photoMap.get(photoFilename);
+      if (match) {
+        avatar = match;
+      } else {
+        warnings.push(`Missing image for "${name}": ${photoFilename}`);
+      }
+    }
+
+    people.push(
+      createPerson(name, {
+        id: `p-${index}`,
+        isGuest: false,
+        alias: record.alias ?? "",
+        photoFilename,
+        avatar,
+      })
+    );
+  });
+
+  if (people.length === 0) {
+    errors.push("No valid rows found in the CSV.");
+  } else {
+    const guestPeople = state.people.filter((p) => p.isGuest);
+    const existingNames = new Set(people.map((p) => p.name.toLowerCase()));
+    const guestsToAppend = guestPeople.filter(
+      (guest) => !existingNames.has(guest.name.toLowerCase())
+    );
+    state.people = people.concat(guestsToAppend);
+    renderPeopleList();
+    renderAbsentList();
+    renderCanvas();
+  }
+
+  const mergedWarnings = warnings.concat(extraWarnings);
+  if (showAlerts) {
+    if (errors.length) {
+      showAlertModal("CSV Import Errors", errors, "error");
+    } else if (mergedWarnings.length) {
+      showAlertModal("CSV Imported With Warnings", mergedWarnings, "warning");
+    } else {
+      showAlertModal("CSV Imported", ["Roster loaded successfully."], "success");
+    }
+  }
+}
+
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (char === '"') {
+      if (inQuotes && text[i + 1] === '"') {
+        field += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+    if (char === "," && !inQuotes) {
+      row.push(field);
+      field = "";
+      continue;
+    }
+    if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && text[i + 1] === "\n") {
+        i++;
+      }
+      row.push(field);
+      field = "";
+      if (row.some((value) => value.trim() !== "")) {
+        rows.push(row);
+      }
+      row = [];
+      continue;
+    }
+    field += char;
+  }
+  row.push(field);
+  if (row.some((value) => value.trim() !== "")) {
+    rows.push(row);
+  }
+  return rows;
+}
+
+function parseMemberCSV(text) {
+  const rows = parseCSV(text);
+  if (rows.length === 0) {
+    return { records: [], errors: ["CSV is empty."] };
+  }
+  const headers = rows[0].map((h) => h.trim().toLowerCase());
+  const nameIndex = headers.indexOf("name");
+  const photoIndex = headers.indexOf("photo_filename");
+  const aliasIndex = headers.indexOf("alias");
+  const errors = [];
+
+  if (nameIndex === -1) errors.push('Missing "name" column.');
+  if (photoIndex === -1) errors.push('Missing "photo_filename" column.');
+
+  if (errors.length) {
+    return { records: [], errors };
+  }
+
+  const records = [];
+  const warnings = [];
+  rows.slice(1).forEach((row) => {
+    const name = row[nameIndex] ?? "";
+    const photo_filename = row[photoIndex] ?? "";
+    const alias = aliasIndex === -1 ? "" : row[aliasIndex] ?? "";
+    const isExample =
+      String(name).trim().toLowerCase() === "example name" &&
+      String(photo_filename).trim().toLowerCase() === "example.jpg";
+    if (isExample) {
+      warnings.push("Removed template example row.");
+      return;
+    }
+    records.push({ name, photo_filename, alias });
+  });
+
+  return { records, errors: [], warnings };
+}
+
+function downloadCsvTemplate() {
+  const template = [
+    "name,photo_filename,alias",
+  ].join("\n");
+  const blob = new Blob([template], { type: "text/csv" });
+  triggerDownload(blob, "members_template.csv");
+}
+
+function findPersonByName(name) {
+  const needle = name.toLowerCase();
+  return state.people.find((person) => person.name.toLowerCase() === needle);
+}
+
+function addGuestToState(rawName) {
+  const name = normalizeName(rawName);
+  if (!name) {
+    return false;
+  }
+  if (findPersonByName(name)) {
+    return false;
+  }
+  const person = createPerson(name, { isGuest: true });
+  state.people.push(person);
+  return true;
+}
+
+function removeGuest(personId) {
+  const person = state.people.find((p) => p.id === personId);
+  if (!person || !person.isGuest) {
+    return;
+  }
+  state.people = state.people.filter((p) => p.id !== personId);
+  if (state.currentSpeakerId === personId) {
+    setCurrentSpeaker(null);
+  }
+  renderPeopleList();
+  renderAbsentList();
+  renderCanvas();
 }
 
 function updateDateTime() {
@@ -223,9 +451,19 @@ function setStage(stage) {
   const isStage1 = stage === 1;
   elements.stage1Controls.hidden = !isStage1;
   elements.stage2Controls.hidden = isStage1;
+  if (elements.dataImport) {
+    elements.dataImport.hidden = !isStage1;
+  }
+  if (elements.guestAdd) {
+    elements.guestAdd.hidden = !isStage1;
+  }
 
   if (!isStage1) {
-    state.currentSessionName = elements.sessionName.value || "Untitled Session";
+    const name = elements.sessionName.value.trim();
+    if (name) {
+      state.currentSessionName = name;
+    }
+    clearTableSelection();
   }
 
   elements.canvasHint.textContent = isStage1
@@ -249,18 +487,34 @@ function renderPeopleList() {
     }
 
     const img = document.createElement("img");
-    img.src = person.avatar;
-    img.alt = person.name;
+    setPersonImage(img, person);
 
     const label = document.createElement("span");
     label.textContent = person.name;
 
     button.appendChild(img);
     button.appendChild(label);
+    if (person.isGuest && state.stage === 1) {
+      const remove = document.createElement("span");
+      remove.className = "guest-delete";
+      remove.setAttribute("role", "button");
+      remove.setAttribute("aria-label", `Remove ${person.name}`);
+      remove.innerHTML = '<i data-lucide="x"></i>';
+      remove.addEventListener("pointerdown", (event) => {
+        event.stopPropagation();
+      });
+      remove.addEventListener("click", (event) => {
+        event.stopPropagation();
+        event.preventDefault();
+        removeGuest(person.id);
+      });
+      button.appendChild(remove);
+    }
 
     attachPersonHandlers(button, person);
     elements.peopleList.appendChild(button);
   });
+  refreshIcons();
 }
 
 function renderAbsentList() {
@@ -275,15 +529,31 @@ function renderAbsentList() {
         item.classList.add("speaker-active");
       }
       const img = document.createElement("img");
-      img.src = person.avatar;
-      img.alt = person.name;
+      setPersonImage(img, person);
       const label = document.createElement("span");
       label.textContent = person.name;
       item.appendChild(img);
       item.appendChild(label);
+      if (person.isGuest && state.stage === 1) {
+        const remove = document.createElement("span");
+        remove.className = "guest-delete";
+        remove.setAttribute("role", "button");
+        remove.setAttribute("aria-label", `Remove ${person.name}`);
+        remove.innerHTML = '<i data-lucide="x"></i>';
+        remove.addEventListener("pointerdown", (event) => {
+          event.stopPropagation();
+        });
+        remove.addEventListener("click", (event) => {
+          event.stopPropagation();
+          event.preventDefault();
+          removeGuest(person.id);
+        });
+        item.appendChild(remove);
+      }
       attachPersonHandlers(item, person);
       elements.absentList.appendChild(item);
     });
+  refreshIcons();
 }
 
 function attachPersonHandlers(button, person) {
@@ -373,8 +643,7 @@ function createDragGhost(person) {
   const ghost = document.createElement("div");
   ghost.className = "drag-ghost";
   const img = document.createElement("img");
-  img.src = person.avatar;
-  img.alt = person.name;
+  setPersonImage(img, person);
   ghost.appendChild(img);
   document.body.appendChild(ghost);
   return ghost;
@@ -428,17 +697,35 @@ function setAbsentHover(active) {
 
 function renderCanvas() {
   elements.canvas.innerHTML = "";
+  const front = document.createElement("div");
+  front.className = "front-label";
+  front.textContent = "Front";
+  elements.canvas.appendChild(front);
 
   state.tables.forEach((table) => {
     const node = document.createElement("div");
-    node.className = "table";
+    node.className = `table table-${table.shape || "oval"}`;
+    if (state.stage !== 1) {
+      node.classList.add("table-locked");
+    }
+    if (selectedTableId && table.id === selectedTableId) {
+      node.classList.add("table-selected");
+    }
     node.dataset.id = table.id;
     node.style.left = `${table.x}px`;
     node.style.top = `${table.y}px`;
+    node.style.width = `${table.width || TABLE_SIZE.width}px`;
+    node.style.height = `${table.height || TABLE_SIZE.height}px`;
     node.textContent = table.label;
     node.addEventListener("pointerdown", (event) =>
       handleTablePointerDown(event, table)
     );
+    if (state.stage === 1) {
+      node.appendChild(createTableDelete(table.id));
+      node.appendChild(createResizeHandle("e"));
+      node.appendChild(createResizeHandle("s"));
+      node.appendChild(createResizeHandle("se"));
+    }
     elements.canvas.appendChild(node);
   });
 
@@ -456,12 +743,27 @@ function renderCanvas() {
     chip.style.left = `${person.placement.x}px`;
     chip.style.top = `${person.placement.y}px`;
     const img = document.createElement("img");
-    img.src = person.avatar;
-    img.alt = person.name;
+    setPersonImage(img, person);
     const label = document.createElement("span");
     label.textContent = person.name;
     chip.appendChild(img);
     chip.appendChild(label);
+    if (person.isGuest && state.stage === 1) {
+      const remove = document.createElement("span");
+      remove.className = "guest-delete";
+      remove.setAttribute("role", "button");
+      remove.setAttribute("aria-label", `Remove ${person.name}`);
+      remove.innerHTML = '<i data-lucide="x"></i>';
+      remove.addEventListener("pointerdown", (event) => {
+        event.stopPropagation();
+      });
+      remove.addEventListener("click", (event) => {
+        event.stopPropagation();
+        event.preventDefault();
+        removeGuest(person.id);
+      });
+      chip.appendChild(remove);
+    }
     chip.addEventListener("pointerdown", (event) => {
       if (event.button !== 0) {
         return;
@@ -471,6 +773,7 @@ function renderCanvas() {
     });
     elements.canvas.appendChild(chip);
   });
+  refreshIcons();
 }
 
 function placePersonAt(personId, x, y) {
@@ -510,13 +813,26 @@ function clearPersonStatus(personId) {
 }
 
 function addTable() {
+  addTableWithShape("oval");
+}
+
+function addTableWithShape(shape) {
   const id = `t-${Date.now()}`;
   const offset = state.tables.length * 18;
+  const size =
+    shape === "circle"
+      ? { width: CIRCLE_SIZE, height: CIRCLE_SIZE }
+      : shape === "rect"
+        ? { width: RECT_SIZE.width, height: RECT_SIZE.height }
+        : { width: TABLE_SIZE.width, height: TABLE_SIZE.height };
   state.tables.push({
     id,
     label: `Table ${state.tables.length + 1}`,
     x: 40 + offset,
     y: 40 + offset,
+    width: size.width,
+    height: size.height,
+    shape,
   });
   renderCanvas();
 }
@@ -533,11 +849,24 @@ function clearTables() {
 }
 
 let tableDrag = null;
+let tableResize = null;
+let selectedTableId = null;
 
 function handleTablePointerDown(event, table) {
   if (state.drag && state.drag.type === "person") {
     return;
   }
+  if (state.stage !== 1) {
+    return;
+  }
+  if (event.button !== undefined && event.button !== 0) {
+    return;
+  }
+  if (event.target && event.target.classList.contains("resize-handle")) {
+    return;
+  }
+  selectedTableId = table.id;
+  event.currentTarget.classList.add("table-selected");
   const rect = event.currentTarget.getBoundingClientRect();
   tableDrag = {
     tableId: table.id,
@@ -545,7 +874,11 @@ function handleTablePointerDown(event, table) {
     offsetY: event.clientY - rect.top,
     pointerId: event.pointerId,
   };
-  event.currentTarget.setPointerCapture(event.pointerId);
+  try {
+    event.currentTarget.setPointerCapture(event.pointerId);
+  } catch (err) {
+    console.warn("Unable to set pointer capture for table drag:", err);
+  }
   event.currentTarget.addEventListener("pointermove", handleTablePointerMove);
   event.currentTarget.addEventListener("pointerup", handleTablePointerUp, {
     once: true,
@@ -561,13 +894,15 @@ function handleTablePointerMove(event) {
     return;
   }
   const bounds = elements.canvas.getBoundingClientRect();
+  const width = table.width || TABLE_SIZE.width;
+  const height = table.height || TABLE_SIZE.height;
   const x = Math.min(
     Math.max(0, event.clientX - bounds.left - tableDrag.offsetX),
-    bounds.width - TABLE_SIZE.width
+    bounds.width - width
   );
   const y = Math.min(
     Math.max(0, event.clientY - bounds.top - tableDrag.offsetY),
-    bounds.height - TABLE_SIZE.height
+    bounds.height - height
   );
   table.x = x;
   table.y = y;
@@ -584,6 +919,111 @@ function handleTablePointerUp(event) {
   renderCanvas();
 }
 
+function clearTableSelection() {
+  selectedTableId = null;
+  renderCanvas();
+}
+
+function createResizeHandle(direction) {
+  const handle = document.createElement("span");
+  handle.className = `resize-handle resize-${direction}`;
+  handle.addEventListener("pointerdown", (event) =>
+    startResize(event, direction)
+  );
+  return handle;
+}
+
+function startResize(event, direction) {
+  event.stopPropagation();
+  if (state.stage !== 1) {
+    return;
+  }
+  if (event.button !== undefined && event.button !== 0) {
+    return;
+  }
+  const tableEl = event.currentTarget.closest(".table");
+  if (!tableEl) return;
+  const tableId = tableEl.dataset.id;
+  const table = state.tables.find((t) => t.id === tableId);
+  if (!table) return;
+  const rect = tableEl.getBoundingClientRect();
+  tableResize = {
+    tableId,
+    direction,
+    startX: event.clientX,
+    startY: event.clientY,
+    startWidth: rect.width,
+    startHeight: rect.height,
+  };
+  try {
+    tableEl.setPointerCapture(event.pointerId);
+  } catch (err) {
+    console.warn("Unable to set pointer capture for table resize:", err);
+  }
+  tableEl.addEventListener("pointermove", handleResizeMove);
+  tableEl.addEventListener("pointerup", handleResizeUp, { once: true });
+}
+
+function handleResizeMove(event) {
+  if (!tableResize) return;
+  const table = state.tables.find((t) => t.id === tableResize.tableId);
+  if (!table) return;
+  const bounds = elements.canvas.getBoundingClientRect();
+  const dx = event.clientX - tableResize.startX;
+  const dy = event.clientY - tableResize.startY;
+  const minSize = 80;
+  let width = tableResize.startWidth;
+  let height = tableResize.startHeight;
+
+  if (tableResize.direction.includes("e")) {
+    width = Math.max(minSize, tableResize.startWidth + dx);
+  }
+  if (tableResize.direction.includes("s")) {
+    height = Math.max(minSize, tableResize.startHeight + dy);
+  }
+  if ((table.shape || "oval") === "circle") {
+    const size = Math.max(width, height);
+    width = size;
+    height = size;
+  }
+
+  width = Math.min(width, bounds.width - table.x);
+  height = Math.min(height, bounds.height - table.y);
+
+  table.width = width;
+  table.height = height;
+  const el = event.currentTarget;
+  el.style.width = `${width}px`;
+  el.style.height = `${height}px`;
+}
+
+function handleResizeUp(event) {
+  if (tableResize) {
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    event.currentTarget.removeEventListener("pointermove", handleResizeMove);
+  }
+  tableResize = null;
+  renderCanvas();
+}
+
+function createTableDelete(tableId) {
+  const btn = document.createElement("span");
+  btn.className = "table-delete";
+  btn.setAttribute("role", "button");
+  btn.setAttribute("aria-label", "Delete table");
+  btn.innerHTML = '<i data-lucide="x"></i>';
+  btn.addEventListener("pointerdown", (event) => {
+    event.stopPropagation();
+  });
+  btn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    state.tables = state.tables.filter((t) => t.id !== tableId);
+    renderCanvas();
+  });
+  return btn;
+}
+
 function setCurrentSpeaker(person) {
   state.currentSpeakerId = person ? person.id : null;
   elements.currentSpeaker.textContent = person ? person.name : "None";
@@ -597,6 +1037,7 @@ function addSpeakerLog(person) {
   state.speakerLog.unshift({
     id: `log-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     name: person.name,
+    alias: person.alias ?? "",
     time: formatDuration(timestamp),
   });
 }
@@ -661,7 +1102,7 @@ function updateTimer() {
   elements.recTimer.textContent = formatDuration(elapsed);
 }
 
-function stopRecording() {
+async function stopRecording() {
   if (!state.recorder) {
     return;
   }
@@ -677,6 +1118,7 @@ function stopRecording() {
   if (state.lastRecordingBlob) {
     elements.replayBtn.disabled = false;
   }
+  await saveCurrentSession();
 }
 
 function exportSession() {
@@ -764,12 +1206,16 @@ async function saveCurrentSession() {
   if (!state.lastRecordingBlob && state.speakerLog.length === 0) {
     return null;
   }
+  if (!state.currentSessionName.trim()) {
+    showAlertModal("Session Name Required", ["Please enter a session name."], "warning");
+    return null;
+  }
   const sessionId = `session-${Date.now()}`;
   const hasAudio = !!state.lastRecordingBlob;
 
   const session = {
     id: sessionId,
-    name: state.currentSessionName || "Untitled Session",
+    name: state.currentSessionName.trim(),
     date: new Date().toLocaleDateString(),
     time: new Date().toLocaleTimeString(),
     speakerLog: [...state.speakerLog],
@@ -885,17 +1331,21 @@ function renderHistoryList() {
       <div class="history-item" data-id="${session.id}">
         <div class="history-item-info">
           <h3>${session.name}</h3>
-          <p>${session.date} • ${session.duration || "No recording"} • ${speakerCount} speaker${speakerCount !== 1 ? 's' : ''}</p>
+          <p>${session.date} • ${session.time} • ${session.duration || "No recording"} • ${speakerCount} speaker${speakerCount !== 1 ? 's' : ''}</p>
         </div>
         <div class="history-item-actions">
           <div class="history-item-status">
-            ${hasAudio ? '<span class="has-audio">▶</span>' : '<span class="no-audio">No audio</span>'}
+            ${hasAudio ? '<span class="has-audio" aria-label="Has audio"><i data-lucide="play"></i></span>' : '<span class="no-audio">No audio</span>'}
           </div>
-          <button class="history-delete" data-id="${session.id}" title="Delete session">🗑</button>
+          <button class="history-delete" data-id="${session.id}" title="Delete session" aria-label="Delete session">
+            <i data-lucide="trash-2"></i>
+          </button>
         </div>
       </div>
     `;
   }).join("");
+
+  refreshIcons();
 
   elements.historyList.querySelectorAll(".history-item").forEach(item => {
     item.addEventListener("click", () => {
@@ -911,6 +1361,12 @@ function renderHistoryList() {
       deleteSession(sessionId);
     });
   });
+}
+
+function refreshIcons() {
+  if (window.lucide && typeof window.lucide.createIcons === "function") {
+    window.lucide.createIcons();
+  }
 }
 
 async function deleteSession(sessionId) {
@@ -1078,13 +1534,44 @@ function updateModalSpeaker() {
 
 function setupEvents() {
   elements.addTableBtn.addEventListener("click", addTable);
+  elements.addCircleBtn.addEventListener("click", () =>
+    addTableWithShape("circle")
+  );
+  elements.addRectBtn.addEventListener("click", () =>
+    addTableWithShape("rect")
+  );
   elements.clearTablesBtn.addEventListener("click", clearTables);
-  elements.confirmSetupBtn.addEventListener("click", () => setStage(2));
+  elements.confirmSetupBtn.addEventListener("click", () => {
+    const name = elements.sessionName.value.trim();
+    if (!name) {
+      showAlertModal("Session Name Required", ["Please enter a session name."], "warning");
+      return;
+    }
+    state.currentSessionName = name;
+    setStage(2);
+  });
   elements.startBtn.addEventListener("click", startRecording);
   elements.stopBtn.addEventListener("click", stopRecording);
   elements.exportBtn.addEventListener("click", exportSession);
   elements.replayBtn.addEventListener("click", replayRecording);
   elements.closeModalBtn.addEventListener("click", closeReplayModal);
+  elements.addGuestBtn.addEventListener("click", handleAddGuest);
+  elements.guestNameInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleAddGuest();
+    }
+  });
+  elements.csvPickBtn.addEventListener("click", () => elements.csvInput.click());
+  elements.photosPickBtn.addEventListener("click", () =>
+    elements.photosInput.click()
+  );
+  elements.csvTemplateLink.addEventListener("click", (event) => {
+    event.preventDefault();
+    downloadCsvTemplate();
+  });
+  elements.csvInput.addEventListener("change", handleCsvUpload);
+  elements.photosInput.addEventListener("change", handlePhotoUpload);
   elements.replayModal.addEventListener("click", (e) => {
     if (e.target === elements.replayModal) {
       closeReplayModal();
@@ -1098,16 +1585,109 @@ function setupEvents() {
       closeHistoryModal();
     }
   });
+  const alertModal = document.getElementById("alertModal");
+  if (alertModal) {
+    const closeAlertBtn = document.getElementById("closeAlertBtn");
+    closeAlertBtn?.addEventListener("click", closeAlertModal);
+    alertModal.addEventListener("click", (e) => {
+      if (e.target === alertModal) {
+        closeAlertModal();
+      }
+    });
+  }
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       if (!elements.replayModal.hidden) closeReplayModal();
       if (!elements.historyModal.hidden) closeHistoryModal();
+      closeAlertModal();
     }
   });
 }
 
+function handleCsvUpload(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const csvText = String(reader.result || "");
+    const { records, errors, warnings } = parseMemberCSV(csvText);
+    if (errors.length) {
+      showAlertModal("CSV Import Error", errors, "error");
+      return;
+    }
+    state.membersData = records;
+    elements.csvStatus.textContent = `${records.length} members loaded`;
+    applyRoster(records, { extraWarnings: warnings });
+  };
+  reader.onerror = () => {
+    showAlertModal("CSV Import Error", ["Failed to read CSV file."], "error");
+  };
+  reader.readAsText(file);
+}
+
+function handlePhotoUpload(event) {
+  const files = event.target.files;
+  if (!files || files.length === 0) return;
+  setPhotoMapFromFiles(files);
+  elements.photosStatus.textContent = `${files.length} photo${files.length === 1 ? "" : "s"} loaded`;
+
+  if (!state.membersData || state.membersData.length === 0) {
+    showAlertModal(
+      "Photos Uploaded",
+      ["Photos loaded. Upload a CSV to map them to members."],
+      "warning"
+    );
+    return;
+  }
+  applyRoster(state.membersData);
+}
+
+function handleAddGuest() {
+  const rawName = elements.guestNameInput.value;
+  const added = addGuestToState(rawName);
+  if (!added) {
+    showAlertModal("Guest Not Added", ["Guest already exists or name is empty."], "warning");
+    return;
+  }
+  elements.guestNameInput.value = "";
+  renderPeopleList();
+  renderAbsentList();
+  renderCanvas();
+}
+
+function showAlertModal(title, messages, tone = "info") {
+  const modal = document.getElementById("alertModal");
+  const titleEl = document.getElementById("alertTitle");
+  const listEl = document.getElementById("alertMessages");
+  const badge = document.getElementById("alertBadge");
+  if (!modal || !titleEl || !listEl || !badge) {
+    alert(messages.join("\n"));
+    return;
+  }
+  titleEl.textContent = title;
+  listEl.innerHTML = messages.map((msg) => `<li>${msg}</li>`).join("");
+  modal.dataset.tone = tone;
+  badge.textContent =
+    tone === "success"
+      ? "Success"
+      : tone === "warning"
+        ? "Warning"
+        : tone === "error"
+          ? "Error"
+          : "Info";
+  modal.hidden = false;
+}
+
+function closeAlertModal() {
+  const modal = document.getElementById("alertModal");
+  if (modal) modal.hidden = true;
+}
+
 async function init() {
-  seedPeople();
+  state.membersData = [];
+  state.people = [];
+  localStorage.removeItem("minutesMembersCsv");
+  clearGuestStorage();
   updateDateTime();
   setInterval(updateDateTime, 30000);
   try {
@@ -1121,6 +1701,7 @@ async function init() {
   renderCanvas();
   setStage(1);
   setupEvents();
+  refreshIcons();
 }
 
 init();
