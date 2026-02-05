@@ -95,6 +95,7 @@ const TABLE_SIZE = { width: 240, height: 150 };
 const CIRCLE_SIZE = 150;
 const RECT_SIZE = { width: 220, height: 130 };
 const PERSON_SIZE = 72;
+const TOUR_KEY = "minutesTourSeen";
 
 const state = {
   stage: 1,
@@ -116,6 +117,7 @@ const state = {
   membersData: [],
   photoMap: new Map(),
   photoUrls: [],
+  tourIndex: 0,
 };
 
 const elements = {
@@ -162,7 +164,50 @@ const elements = {
   historyModal: document.getElementById("historyModal"),
   closeHistoryBtn: document.getElementById("closeHistoryBtn"),
   historyList: document.getElementById("historyList"),
+  tourOverlay: document.getElementById("tourOverlay"),
+  tourSpotlight: document.getElementById("tourSpotlight"),
+  tourCard: document.getElementById("tourCard"),
+  tourTitle: document.getElementById("tourTitle"),
+  tourText: document.getElementById("tourText"),
+  tourStepCount: document.getElementById("tourStepCount"),
+  tourNextBtn: document.getElementById("tourNextBtn"),
+  tourBackBtn: document.getElementById("tourBackBtn"),
+  tourSkipBtn: document.getElementById("tourSkipBtn"),
+  tourArrow: document.getElementById("tourArrow"),
 };
+
+const tourSteps = [
+  {
+    selector: "#sessionName",
+    title: "Name the session",
+    text: "Give this meeting a clear name before you start.",
+  },
+  {
+    selector: "#addTableBtn",
+    title: "Add tables",
+    text: "Add oval, circle, or rectangle tables to match your room layout.",
+  },
+  {
+    selector: "#csvPickBtn",
+    title: "Upload CSV",
+    text: "Load your roster with name, photo_filename, and optional alias.",
+  },
+  {
+    selector: "#photosPickBtn",
+    title: "Upload photos",
+    text: "Match photo filenames exactly to show faces.",
+  },
+  {
+    selector: "#guestNameInput",
+    title: "Add guests",
+    text: "Add guests manually here if they are not in the CSV.",
+  },
+  {
+    selector: "#confirmSetupBtn",
+    title: "Start the session",
+    text: "When everything looks right, start recording.",
+  },
+];
 
 function svgAvatar(name) {
   const hue = Math.floor(Math.random() * 360);
@@ -464,6 +509,7 @@ function setStage(stage) {
       state.currentSessionName = name;
     }
     clearTableSelection();
+    endTour();
   }
 
   elements.canvasHint.textContent = isStage1
@@ -1585,6 +1631,9 @@ function setupEvents() {
       closeHistoryModal();
     }
   });
+  elements.tourNextBtn?.addEventListener("click", tourNext);
+  elements.tourBackBtn?.addEventListener("click", tourBack);
+  elements.tourSkipBtn?.addEventListener("click", endTour);
   const alertModal = document.getElementById("alertModal");
   if (alertModal) {
     const closeAlertBtn = document.getElementById("closeAlertBtn");
@@ -1600,8 +1649,10 @@ function setupEvents() {
       if (!elements.replayModal.hidden) closeReplayModal();
       if (!elements.historyModal.hidden) closeHistoryModal();
       closeAlertModal();
+      endTour();
     }
   });
+  window.addEventListener("resize", positionTour);
 }
 
 function handleCsvUpload(event) {
@@ -1683,6 +1734,121 @@ function closeAlertModal() {
   if (modal) modal.hidden = true;
 }
 
+function maybeStartTour() {
+  if (localStorage.getItem(TOUR_KEY) === "1") {
+    return;
+  }
+  if (!elements.tourOverlay) {
+    return;
+  }
+  state.tourIndex = 0;
+  elements.tourOverlay.hidden = false;
+  showTourStep(state.tourIndex);
+}
+
+function endTour() {
+  if (!elements.tourOverlay) {
+    return;
+  }
+  elements.tourOverlay.hidden = true;
+  localStorage.setItem(TOUR_KEY, "1");
+}
+
+function tourNext() {
+  state.tourIndex = (state.tourIndex ?? 0) + 1;
+  showTourStep(state.tourIndex);
+}
+
+function tourBack() {
+  state.tourIndex = Math.max(0, (state.tourIndex ?? 0) - 1);
+  showTourStep(state.tourIndex);
+}
+
+function showTourStep(index) {
+  if (!elements.tourOverlay || !elements.tourSpotlight || !elements.tourCard) {
+    return;
+  }
+  if (index >= tourSteps.length) {
+    endTour();
+    return;
+  }
+
+  let stepIndex = index;
+  let target = null;
+  while (stepIndex < tourSteps.length) {
+    const step = tourSteps[stepIndex];
+    const el = document.querySelector(step.selector);
+    if (el && el.getClientRects().length > 0) {
+      target = el;
+      break;
+    }
+    stepIndex += 1;
+  }
+  if (!target) {
+    endTour();
+    return;
+  }
+  state.tourIndex = stepIndex;
+  const step = tourSteps[stepIndex];
+
+  elements.tourTitle.textContent = step.title;
+  elements.tourText.textContent = step.text;
+  elements.tourStepCount.textContent = `Step ${stepIndex + 1} of ${tourSteps.length}`;
+  elements.tourBackBtn.disabled = stepIndex === 0;
+  elements.tourNextBtn.textContent =
+    stepIndex === tourSteps.length - 1 ? "Finish" : "Next";
+
+  positionTour(target);
+}
+
+function positionTour(target) {
+  if (!elements.tourOverlay || elements.tourOverlay.hidden) {
+    return;
+  }
+  const step = tourSteps[state.tourIndex ?? 0];
+  const el = target || (step && document.querySelector(step.selector));
+  if (!el) return;
+
+  const rect = el.getBoundingClientRect();
+  const padding = 10;
+  const spotlight = elements.tourSpotlight;
+  const left = Math.max(8, rect.left - padding);
+  const top = Math.max(8, rect.top - padding);
+  const width = Math.min(window.innerWidth - 16, rect.width + padding * 2);
+  const height = Math.min(window.innerHeight - 16, rect.height + padding * 2);
+  spotlight.style.left = `${left}px`;
+  spotlight.style.top = `${top}px`;
+  spotlight.style.width = `${width}px`;
+  spotlight.style.height = `${height}px`;
+
+  const card = elements.tourCard;
+  const cardWidth = card.offsetWidth || 280;
+  const cardHeight = card.offsetHeight || 140;
+
+  let cardTop = rect.bottom + 18;
+  let arrowDir = "up";
+  if (cardTop + cardHeight > window.innerHeight - 12) {
+    cardTop = rect.top - cardHeight - 18;
+    arrowDir = "down";
+  }
+  cardTop = Math.max(12, Math.min(cardTop, window.innerHeight - cardHeight - 12));
+
+  let cardLeft = rect.left;
+  cardLeft = Math.max(12, Math.min(cardLeft, window.innerWidth - cardWidth - 12));
+
+  card.style.top = `${cardTop}px`;
+  card.style.left = `${cardLeft}px`;
+
+  const arrow = elements.tourArrow;
+  arrow.style.display = "block";
+  arrow.style.top = arrowDir === "up" ? "-6px" : "auto";
+  arrow.style.bottom = arrowDir === "down" ? "-6px" : "auto";
+  arrow.style.left = `${Math.min(
+    cardWidth - 24,
+    Math.max(18, rect.left - cardLeft + rect.width / 2 - 6)
+  )}px`;
+}
+
 async function init() {
   state.membersData = [];
   state.people = [];
@@ -1702,6 +1868,7 @@ async function init() {
   setStage(1);
   setupEvents();
   refreshIcons();
+  setTimeout(maybeStartTour, 200);
 }
 
 init();
