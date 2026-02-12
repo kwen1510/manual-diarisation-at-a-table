@@ -494,6 +494,7 @@ function formatDuration(ms) {
 function setStage(stage) {
   state.stage = stage;
   const isStage1 = stage === 1;
+  document.body.classList.toggle("meeting-mode", !isStage1);
   elements.stage1Controls.hidden = !isStage1;
   elements.stage2Controls.hidden = isStage1;
   if (elements.dataImport) {
@@ -510,6 +511,9 @@ function setStage(stage) {
     }
     clearTableSelection();
     endTour();
+    enterFullscreen();
+  } else {
+    exitFullscreen();
   }
 
   elements.canvasHint.textContent = isStage1
@@ -518,6 +522,24 @@ function setStage(stage) {
   elements.peopleHint.textContent = isStage1
     ? "Drag onto the board. Drop into Absent to mark absent."
     : "Drag to place. Click to log speaker.";
+}
+
+function enterFullscreen() {
+  if (!document.fullscreenEnabled || document.fullscreenElement) {
+    return;
+  }
+  document.documentElement.requestFullscreen().catch(() => {
+    // Ignore fullscreen rejection (for example browser policy/user cancel).
+  });
+}
+
+function exitFullscreen() {
+  if (!document.fullscreenElement) {
+    return;
+  }
+  document.exitFullscreen().catch(() => {
+    // Ignore fullscreen exit failures.
+  });
 }
 
 function renderPeopleList() {

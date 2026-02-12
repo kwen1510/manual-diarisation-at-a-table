@@ -1,0 +1,24 @@
+# OS files
+.DS_Store
+
+# Env and secrets
+.env
+.env.*
+*.env
+*.local
+
+# Python and generated artifacts
+python/
+__pycache__/
+*.pyc
+
+# Meeting assets and local data
+RMC56 photos/
+RMC56 photos.zip
+
+# Editor and tooling
+.vscode/
+.idea/
+
+# Logs
+*.log

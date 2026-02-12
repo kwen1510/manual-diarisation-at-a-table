@@ -8,6 +8,7 @@
   --danger: #ff6b6b;
   --border: #e2e8f0;
   --shadow: rgba(15, 23, 42, 0.08);
+  --meeting-rail-width: 280px;
 }
 
 * {
@@ -203,6 +204,53 @@ button.ghost-danger:hover {
   padding: 16px 24px 24px;
   flex: 1;
   min-height: 0;
+}
+
+body.meeting-mode .layout {
+  grid-template-columns: 1fr;
+  gap: 16px;
+  padding-right: calc(var(--meeting-rail-width) + 24px);
+}
+
+body.meeting-mode .canvas-panel {
+  height: calc(100vh - 110px);
+}
+
+body.meeting-mode .canvas {
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+}
+
+body.meeting-mode .right {
+  position: fixed;
+  top: 68px;
+  right: 0;
+  bottom: 0;
+  width: var(--meeting-rail-width);
+  padding: 12px;
+  z-index: 15;
+  pointer-events: none;
+}
+
+body.meeting-mode .right .people {
+  height: 100%;
+  pointer-events: auto;
+  border-radius: 16px 0 0 16px;
+}
+
+body.meeting-mode .right .absent {
+  display: none;
+}
+
+body.meeting-mode .people-list {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+body.meeting-mode .person-button img {
+  width: 64px;
+  height: 64px;
 }
 
 .left {
@@ -898,6 +946,12 @@ button:disabled {
   }
   body {
     overflow: auto;
+  }
+  body.meeting-mode {
+    overflow: hidden;
+  }
+  body.meeting-mode {
+    --meeting-rail-width: 220px;
   }
 }
 
