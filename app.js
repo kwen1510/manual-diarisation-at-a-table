@@ -118,6 +118,9 @@ const state = {
   photoMap: new Map(),
   photoUrls: [],
   tourIndex: 0,
+  recordingParts: [],
+  nextPartNumber: 1,
+  currentPartNumber: null,
 };
 
 const elements = {
@@ -491,6 +494,32 @@ function formatDuration(ms) {
   return `${minutes}:${seconds}`;
 }
 
+function sanitizeFilename(value) {
+  const cleaned = value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-_]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return cleaned || "session";
+}
+
+function updatePartUi() {
+  if (state.recording) {
+    elements.startBtn.textContent = `Recording P${state.currentPartNumber}`;
+    elements.recStatus.textContent = `Recording • Part ${state.currentPartNumber}`;
+    return;
+  }
+  elements.startBtn.textContent =
+    state.recordingParts.length > 0
+      ? `Continue P${state.nextPartNumber}`
+      : "Record Part 1";
+  if (state.recordingParts.length > 0) {
+    elements.recStatus.textContent = `Idle • ${state.recordingParts.length} part${state.recordingParts.length === 1 ? "" : "s"} saved`;
+  } else {
+    elements.recStatus.textContent = "Idle";
+  }
+}
+
 function setStage(stage) {
   state.stage = stage;
   const isStage1 = stage === 1;
@@ -498,7 +527,7 @@ function setStage(stage) {
   elements.stage1Controls.hidden = !isStage1;
   elements.stage2Controls.hidden = isStage1;
   if (elements.dataImport) {
-    elements.dataImport.hidden = !isStage1;
+    elements.dataImport.hidden = false;
   }
   if (elements.guestAdd) {
     elements.guestAdd.hidden = !isStage1;
@@ -1106,6 +1135,7 @@ function addSpeakerLog(person) {
     id: `log-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     name: person.name,
     alias: person.alias ?? "",
+    part: state.currentPartNumber,
     time: formatDuration(timestamp),
   });
 }
@@ -1132,16 +1162,22 @@ async function startRecording() {
     const options = selectedType ? { mimeType: selectedType } : undefined;
     const recorder = new MediaRecorder(stream, options);
     state.recorder = recorder;
+    state.currentPartNumber = state.nextPartNumber;
     state.chunks = [];
-    state.lastRecordingBlob = null;
+    state.speakerLog = [];
+    elements.recTimer.textContent = "00:00";
     state.recording = true;
     state.startTime = Date.now();
+    const currentSpeaker = state.people.find((person) => person.id === state.currentSpeakerId);
+    if (currentSpeaker) {
+      addSpeakerLog(currentSpeaker);
+    }
     state.recordingMime = recorder.mimeType || selectedType || "";
-    elements.recStatus.textContent = "Recording";
+    elements.recStatus.textContent = `Recording • Part ${state.currentPartNumber}`;
     elements.recStatus.classList.add("recording");
     elements.startBtn.disabled = true;
     elements.stopBtn.disabled = false;
-    elements.exportBtn.disabled = true;
+    elements.exportBtn.disabled = state.recordingParts.length === 0;
     elements.replayBtn.disabled = true;
 
     recorder.ondataavailable = (event) => {
@@ -1157,6 +1193,7 @@ async function startRecording() {
     recorder.start(1000);
     updateTimer();
     state.timerInterval = setInterval(updateTimer, 1000);
+    updatePartUi();
   } catch (error) {
     alert("Microphone access denied or unavailable.");
   }
@@ -1181,34 +1218,78 @@ async function stopRecording() {
   elements.recStatus.classList.remove("recording");
   elements.startBtn.disabled = false;
   elements.stopBtn.disabled = true;
-  elements.exportBtn.disabled = false;
   state.lastRecordingBlob = buildAudioBlob();
-  if (state.lastRecordingBlob) {
+  if (state.lastRecordingBlob && state.currentPartNumber) {
+    const partLog = [...state.speakerLog].reverse();
+    state.recordingParts.push({
+      part: state.currentPartNumber,
+      audioBlob: state.lastRecordingBlob,
+      mime: state.lastRecordingBlob.type || state.recordingMime,
+      duration: elements.recTimer.textContent,
+      speakerLog: partLog,
+      stoppedAt: new Date().toISOString(),
+    });
+    state.nextPartNumber = state.currentPartNumber + 1;
+    elements.recStatus.textContent = `Stopped • Part ${state.currentPartNumber} saved`;
+  }
+  if (state.lastRecordingBlob || state.recordingParts.length > 0) {
     elements.replayBtn.disabled = false;
   }
-  await saveCurrentSession();
+  elements.exportBtn.disabled = state.recordingParts.length === 0;
+  updatePartUi();
 }
 
 function exportSession() {
-  if (!state.chunks.length) {
-    alert("No audio recorded yet.");
+  if (state.recording) {
+    alert("Please stop recording before exporting.");
     return;
   }
-  const audioBlob = state.lastRecordingBlob || buildAudioBlob();
-  if (!audioBlob) {
-    alert("Unable to export audio.");
+  if (!state.recordingParts.length) {
+    alert("No recorded parts yet.");
     return;
   }
+  const sessionLabel = state.currentSessionName || "Untitled Session";
+  const base = sanitizeFilename(sessionLabel);
+  const now = Date.now();
+  const summaryParts = state.recordingParts.map((part) => ({
+    part: part.part,
+    duration: part.duration,
+    transcript: part.speakerLog,
+    stoppedAt: part.stoppedAt,
+  }));
   const metadata = {
-    sessionName: state.currentSessionName || "Untitled Session",
+    sessionName: sessionLabel,
     date: new Date().toLocaleDateString(),
-    log: state.speakerLog,
+    totalParts: state.recordingParts.length,
+    parts: summaryParts,
   };
   const metaBlob = new Blob([JSON.stringify(metadata, null, 2)], {
     type: "application/json",
   });
-  triggerDownload(metaBlob, `minutes-${Date.now()}.json`);
-  triggerDownload(audioBlob, `audio-${Date.now()}.${extensionForMime(audioBlob.type)}`);
+  triggerDownload(metaBlob, `minutes-${base}-${now}.json`);
+
+  state.recordingParts.forEach((part) => {
+    const partMeta = {
+      sessionName: sessionLabel,
+      date: new Date().toLocaleDateString(),
+      part: part.part,
+      duration: part.duration,
+      transcript: part.speakerLog,
+      log: part.speakerLog,
+      stoppedAt: part.stoppedAt,
+    };
+    const partMetaBlob = new Blob([JSON.stringify(partMeta, null, 2)], {
+      type: "application/json",
+    });
+    triggerDownload(
+      partMetaBlob,
+      `minutes-${base}-part-${part.part}-${now}.json`
+    );
+    triggerDownload(
+      part.audioBlob,
+      `audio-${base}-part-${part.part}-${now}.${extensionForMime(part.mime || "")}`
+    );
+  });
 }
 
 function triggerDownload(blob, filename) {
@@ -1354,6 +1435,9 @@ function resetSessionState() {
   state.lastRecordingBlob = null;
   state.chunks = [];
   state.speakerLog = [];
+  state.recordingParts = [];
+  state.nextPartNumber = 1;
+  state.currentPartNumber = null;
   state.currentSessionName = "";
 
   elements.recStatus.textContent = "Idle";
@@ -1365,6 +1449,7 @@ function resetSessionState() {
   elements.replayBtn.disabled = true;
   elements.exportBtn.disabled = true;
   elements.sessionName.value = "";
+  elements.startBtn.textContent = "Record Part 1";
 
   state.people.forEach(p => {
     p.placement = null;
@@ -1696,6 +1781,29 @@ function handleCsvUpload(event) {
     showAlertModal("CSV Import Error", ["Failed to read CSV file."], "error");
   };
   reader.readAsText(file);
+  event.target.value = "";
+}
+
+function remapPeoplePhotosFromPhotoMap() {
+  const missing = [];
+  let mappedCount = 0;
+
+  state.people.forEach((person) => {
+    if (!person.photoFilename) return;
+    const mappedAvatar = state.photoMap.get(person.photoFilename);
+    if (mappedAvatar) {
+      person.avatar = mappedAvatar;
+      mappedCount += 1;
+    } else if (!person.isGuest) {
+      missing.push(`Missing image for "${person.name}": ${person.photoFilename}`);
+    }
+  });
+
+  renderPeopleList();
+  renderAbsentList();
+  renderCanvas();
+
+  return { mappedCount, missing };
 }
 
 function handlePhotoUpload(event) {
@@ -1705,14 +1813,39 @@ function handlePhotoUpload(event) {
   elements.photosStatus.textContent = `${files.length} photo${files.length === 1 ? "" : "s"} loaded`;
 
   if (!state.membersData || state.membersData.length === 0) {
-    showAlertModal(
-      "Photos Uploaded",
-      ["Photos loaded. Upload a CSV to map them to members."],
-      "warning"
+    const hasRosterPhotoFilenames = state.people.some(
+      (person) => !person.isGuest && person.photoFilename
     );
+
+    if (!hasRosterPhotoFilenames) {
+      showAlertModal(
+        "Photos Uploaded",
+        ["Photos loaded. Upload a CSV to map them to members."],
+        "warning"
+      );
+      event.target.value = "";
+      return;
+    }
+
+    const { mappedCount, missing } = remapPeoplePhotosFromPhotoMap();
+    if (missing.length > 0) {
+      showAlertModal(
+        "Photos Uploaded With Warnings",
+        [`Mapped ${mappedCount} member photo${mappedCount === 1 ? "" : "s"}.`, ...missing],
+        "warning"
+      );
+    } else {
+      showAlertModal(
+        "Photos Uploaded",
+        [`Mapped ${mappedCount} member photo${mappedCount === 1 ? "" : "s"}.`],
+        "success"
+      );
+    }
+    event.target.value = "";
     return;
   }
   applyRoster(state.membersData);
+  event.target.value = "";
 }
 
 function handleAddGuest() {
@@ -1890,6 +2023,7 @@ async function init() {
   setStage(1);
   setupEvents();
   refreshIcons();
+  updatePartUi();
   setTimeout(maybeStartTour, 200);
 }
 

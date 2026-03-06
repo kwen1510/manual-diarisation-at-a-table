@@ -7,7 +7,1749 @@
     <title>Minutes Taking App</title>
     <link rel="icon" href="icon-192.svg" type="image/svg+xml" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="styles.css" />
+    <style>
+:root {
+  --bg: #f8fafc;
+  --panel: #ffffff;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --accent: #2b7cff;
+  --accent-soft: #e8f0ff;
+  --danger: #ff6b6b;
+  --border: #e2e8f0;
+  --shadow: rgba(15, 23, 42, 0.08);
+  --meeting-rail-width: 280px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: "Space Grotesk", "Avenir Next", "Gill Sans", sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+  background: #ffffffcc;
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  gap: 24px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.brand h1 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.topbar-center {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  justify-content: center;
+}
+
+.topbar-center[hidden] {
+  display: none;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px;
+  cursor: pointer;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.inline-field.compact {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-width: auto;
+}
+
+.inline-field.compact span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.inline-field.compact input {
+  width: 160px;
+}
+
+.rec-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  padding: 6px 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.rec-badge {
+  background: var(--accent-soft);
+  color: var(--accent);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.rec-badge.recording {
+  background: #ffe5e5;
+  color: var(--danger);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.rec-speaker {
+  font-size: 13px;
+  color: var(--muted);
+  padding: 6px 12px;
+  background: var(--accent-soft);
+  border-radius: 10px;
+}
+
+.rec-speaker strong {
+  color: var(--accent);
+}
+
+.part-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  min-width: 148px;
+}
+
+.part-indicator .label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.part-indicator strong {
+  font-size: 22px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.part-indicator .meta {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.part-indicator.recording {
+  background: #fff5f5;
+  border-color: #ffc7c7;
+}
+
+.part-indicator.recording strong {
+  color: var(--danger);
+}
+
+.rec-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+button.ghost-danger {
+  background: #fff5f5;
+  color: var(--danger);
+  border: 1px solid #ffcccc;
+}
+
+button.ghost-danger:hover {
+  background: #ffe5e5;
+}
+
+.inline-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  min-width: 160px;
+}
+
+.inline-field input {
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.inline-field .value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr);
+  gap: 24px;
+  padding: 16px 24px 24px;
+  flex: 1;
+  min-height: 0;
+}
+
+body.meeting-mode .layout {
+  grid-template-columns: 1fr;
+  gap: 16px;
+  padding-right: calc(var(--meeting-rail-width) + 24px);
+}
+
+body.meeting-mode .canvas-panel {
+  height: calc(100vh - 110px);
+}
+
+body.meeting-mode .canvas {
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+}
+
+body.meeting-mode .right {
+  position: fixed;
+  top: 68px;
+  right: 0;
+  bottom: 0;
+  width: var(--meeting-rail-width);
+  padding: 12px;
+  z-index: 15;
+  pointer-events: none;
+}
+
+body.meeting-mode .right .people {
+  height: 100%;
+  pointer-events: auto;
+  border-radius: 16px 0 0 16px;
+}
+
+body.meeting-mode .right .absent {
+  display: none;
+}
+
+body.meeting-mode .people-list {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+body.meeting-mode .person-button img {
+  width: 64px;
+  height: 64px;
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 0;
+}
+
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+.panel {
+  background: var(--panel);
+  border-radius: 18px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 30px var(--shadow);
+}
+
+.panel h2 {
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.canvas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.canvas-hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.tables-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.canvas-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.front-label {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  max-height: 520px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, #f4f7ff, #eef2f7);
+  border: 1px dashed #dbe3ef;
+  overflow: hidden;
+}
+
+.table {
+  position: absolute;
+  border-radius: 75px;
+  background: #ffffff;
+  border: 1px solid rgba(43, 124, 255, 0.2);
+  box-shadow: 0 10px 22px rgba(43, 124, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #1d4ed8;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.table-oval {
+  border-radius: 75px;
+}
+
+.table-circle {
+  border-radius: 50%;
+}
+
+.table-rect {
+  border-radius: 14px;
+}
+
+.table-locked {
+  cursor: default;
+}
+
+.table-selected {
+  border-color: rgba(43, 124, 255, 0.6);
+  box-shadow: 0 0 0 3px rgba(43, 124, 255, 0.18), 0 10px 22px rgba(43, 124, 255, 0.12);
+}
+
+.resize-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border: 1px solid rgba(43, 124, 255, 0.35);
+  border-radius: 999px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+}
+
+.resize-e {
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+
+.resize-s {
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+
+.resize-se {
+  right: -6px;
+  bottom: -6px;
+  cursor: nwse-resize;
+}
+
+.table-delete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.08);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.table-delete .lucide {
+  width: 12px;
+  height: 12px;
+}
+
+.canvas.drop-target {
+  outline: 2px dashed var(--accent);
+  box-shadow: 0 0 0 6px rgba(43, 124, 255, 0.12);
+}
+
+.seat-person {
+  position: absolute;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+}
+
+.seat-person.speaker-active {
+  border-color: rgba(43, 124, 255, 0.6);
+  box-shadow: 0 0 0 3px rgba(43, 124, 255, 0.18), 0 8px 18px rgba(15, 23, 42, 0.12);
+}
+
+.seat-person img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.seat-person span {
+  font-size: 10px;
+  text-align: center;
+  color: var(--ink);
+}
+
+.people-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.people-header p {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.people-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  overflow: auto;
+  padding-right: 4px;
+  padding-bottom: 8px;
+}
+
+.data-import {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.data-import-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.data-import-status-stack {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.data-import-template {
+  border-top: 1px dashed var(--border);
+  padding-top: 10px;
+}
+
+.data-import-status {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.data-import-note {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.template-link {
+  color: #14532d;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: #dcfce7;
+}
+
+.template-link:hover {
+  text-decoration: underline;
+}
+
+.btn-upload-csv {
+  background: #e0f2fe;
+  color: #0c4a6e;
+}
+
+.btn-upload-photos {
+  background: #ede9fe;
+  color: #4c1d95;
+}
+
+.btn-template {
+  background: #dcfce7;
+  color: #14532d;
+}
+
+.btn-add-table {
+  background: #e0f2fe;
+  color: #1d4ed8;
+}
+
+.btn-add-circle {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.btn-add-rect {
+  background: #ecfccb;
+  color: #365314;
+}
+
+.guest-add {
+  display: flex;
+  gap: 10px;
+  margin: 6px 0 16px;
+  align-items: center;
+}
+
+.guest-add input {
+  flex: 1;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--ink);
+  background: #ffffff;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.guest-add input:focus {
+  outline: none;
+  border-color: rgba(43, 124, 255, 0.55);
+  box-shadow:
+    0 0 0 3px rgba(43, 124, 255, 0.15),
+    inset 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.guest-add button {
+  padding: 10px 18px;
+  border-radius: 14px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+
+.person-button {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 10px 6px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  touch-action: none;
+  position: relative;
+}
+
+.person-button.speaker-active {
+  border-color: rgba(43, 124, 255, 0.6);
+  box-shadow: 0 0 0 3px rgba(43, 124, 255, 0.18);
+}
+
+.person-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+.people {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.people-list {
+  flex: 1;
+}
+
+.absent {
+  display: flex;
+  flex-direction: column;
+  min-height: 140px;
+}
+
+.person-button img {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  object-fit: contain;
+  background: #ffffff;
+}
+
+.person-button span {
+  font-size: 13px;
+  text-align: center;
+  color: var(--ink);
+}
+
+.absent-box {
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  padding: 8px;
+  background: #f8fafc;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 6px;
+  overflow: auto;
+  flex: 1;
+}
+
+.absent-box.drop-target {
+  border-color: rgba(43, 124, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(43, 124, 255, 0.12);
+}
+
+.absent-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+  align-content: flex-start;
+  align-items: flex-start;
+  max-height: 100%;
+  overflow: auto;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.absent-item {
+  border: 1px solid var(--border);
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  touch-action: none;
+  position: relative;
+}
+
+.absent-item.speaker-active {
+  border-color: rgba(43, 124, 255, 0.6);
+  box-shadow: 0 0 0 3px rgba(43, 124, 255, 0.18);
+}
+
+.absent-item img {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  object-fit: contain;
+  background: #f8fafc;
+}
+
+.absent-item span {
+  font-size: 10px;
+  color: var(--ink);
+}
+
+.guest-delete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.08);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.guest-delete .lucide {
+  width: 12px;
+  height: 12px;
+}
+
+.lucide {
+  width: 18px;
+  height: 18px;
+}
+
+.icon-btn .lucide {
+  width: 20px;
+  height: 20px;
+}
+
+.modal-close .lucide {
+  width: 18px;
+  height: 18px;
+}
+
+.history-item-actions .lucide {
+  width: 16px;
+  height: 16px;
+}
+
+.has-audio .lucide {
+  width: 14px;
+  height: 14px;
+}
+
+button {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+button.primary {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+button.ghost {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+button.danger {
+  background: var(--danger);
+  color: #ffffff;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.field input {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.field .value {
+  font-size: 14px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.note {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.alert-modal {
+  width: min(520px, 90vw);
+  padding: 20px;
+}
+
+.alert-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.alert-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #1f2937;
+}
+
+.alert-messages {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+#alertModal[data-tone="success"] .alert-badge {
+  background: #dcfce7;
+  color: #166534;
+}
+
+#alertModal[data-tone="warning"] .alert-badge {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+#alertModal[data-tone="error"] .alert-badge {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.tour-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+}
+
+.tour-spotlight {
+  position: absolute;
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.55);
+  border-radius: 16px;
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+
+.tour-card {
+  position: fixed;
+  max-width: 320px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.2);
+  z-index: 201;
+}
+
+.tour-card h3 {
+  margin: 8px 0 6px;
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.tour-card p {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.tour-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tour-step-count {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tour-skip {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tour-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.tour-arrow {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  transform: rotate(45deg);
+  box-shadow: -6px -6px 12px rgba(15, 23, 42, 0.08);
+}
+
+
+@media (max-width: 960px) {
+  .layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  body {
+    overflow: auto;
+  }
+  body.meeting-mode {
+    overflow: hidden;
+  }
+  body.meeting-mode {
+    --meeting-rail-width: 220px;
+  }
+}
+
+@media (max-width: 720px) {
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .topbar-right {
+    align-items: flex-start;
+  }
+  .stage-setup {
+    justify-content: flex-start;
+  }
+  .brand h1 {
+    font-size: 22px;
+  }
+  .canvas {
+    min-height: 320px;
+  }
+  .people-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .stage-recording {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+.drag-ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: 999;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.18);
+}
+
+.drag-ghost img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 20px;
+  background: #ffffff;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+}
+
+.modal[hidden] {
+  display: none;
+}
+
+.modal-content {
+  background: var(--panel);
+  border-radius: 18px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  font-size: 20px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 10px;
+  line-height: 1;
+  z-index: 10;
+  border-radius: 8px;
+}
+
+.modal-close:hover {
+  background: var(--border);
+  color: var(--ink);
+}
+
+.replay-modal {
+  width: min(860px, 92vw);
+  max-height: 84vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.replay-header {
+  padding: 18px 56px 12px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.replay-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.replay-summary {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.replay-clip-list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.replay-clip-btn {
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.replay-clip-btn:hover {
+  border-color: var(--accent);
+  background: #f8fbff;
+}
+
+.replay-clip-btn.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.replay-main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px 20px;
+  min-height: 0;
+  overflow: auto;
+}
+
+.replay-main audio {
+  width: 100%;
+}
+
+.replay-speaker-now {
+  padding: 14px 16px;
+  background: var(--accent-soft);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.replay-speaker-now .speaker-label {
+  font-size: 12px;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.replay-speaker-now strong {
+  font-size: 17px;
+  color: var(--accent);
+}
+
+.timeline-header {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.timeline-log {
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 8px;
+  min-height: 140px;
+  max-height: 34vh;
+}
+
+.timeline-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 10px;
+  background: #ffffff;
+  border: 1px solid #e7ebf2;
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.timeline-entry:hover {
+  background: #f2f7ff;
+}
+
+.timeline-entry.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.timeline-entry .time {
+  color: var(--muted);
+  font-size: 12px;
+  font-family: monospace;
+  margin-left: 12px;
+}
+
+.timeline-empty {
+  margin: 0;
+  padding: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 700px) {
+  .replay-modal {
+    width: 95vw;
+  }
+  .replay-main {
+    padding: 14px;
+  }
+}
+
+.history-modal {
+  width: 90%;
+  max-width: 500px;
+}
+
+.modal-header-simple {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-header-simple h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+
+.history-list {
+  padding: 16px;
+  max-height: 400px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 40px 20px;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.history-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-delete {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 16px;
+  padding: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.history-delete:hover {
+  color: var(--danger);
+  background: rgba(255, 107, 107, 0.12);
+}
+
+.history-item:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.history-item-info h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 4px;
+}
+
+.history-item-info p {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.history-item-status {
+  flex-shrink: 0;
+}
+
+.history-item-status .has-audio {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 50%;
+  font-size: 12px;
+}
+
+.history-item-status .no-audio {
+  font-size: 11px;
+  color: var(--muted);
+  padding: 6px 10px;
+  background: #f0f0f0;
+  border-radius: 6px;
+}
+
+/* ===== V2 Stage 2 Fullscreen + Agenda Segments ===== */
+body.meeting-mode .topbar {
+  padding: 8px 12px;
+  gap: 12px;
+}
+
+body.meeting-mode .layout {
+  gap: 12px;
+  padding: 8px 12px 12px;
+  padding-right: 12px !important;
+}
+
+body.meeting-mode .canvas-panel {
+  height: calc(100vh - 84px);
+}
+
+body.meeting-mode .right {
+  top: 62px;
+  right: 12px;
+  bottom: 12px;
+  width: min(320px, calc(100vw - 24px));
+  padding: 0;
+  z-index: 40;
+  pointer-events: none;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+body.rail-collapsed.meeting-mode .layout {
+  padding-right: 12px !important;
+}
+
+body.rail-collapsed.meeting-mode .right {
+  transform: translateX(calc(100% + 12px));
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.meeting-mode .right .people {
+  height: 100%;
+  pointer-events: auto;
+  padding: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 35px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(8px);
+}
+
+body.meeting-mode .right .people .people-header {
+  padding: 12px 14px 8px;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+body.meeting-mode .right .people .people-header p {
+  margin: 0;
+}
+
+body.meeting-mode .right .people .guest-add {
+  margin: 0;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+body.meeting-mode .rec-buttons {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+
+body.meeting-mode .rec-buttons .icon-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 999px;
+  background: #f3f7ff;
+  border-color: #dbe7ff;
+  color: #1d4ed8;
+}
+
+body.meeting-mode .rec-buttons .icon-btn:hover {
+  background: #e8f0ff;
+}
+
+body.meeting-mode .right .people .people-list {
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  overflow: auto;
+  flex: 1;
+}
+
+body.meeting-mode .right .people .data-import {
+  display: flex !important;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+}
+
+body.meeting-mode .right .people .data-import .data-import-template {
+  display: none;
+}
+
+body.meeting-mode .right .people .data-import .data-import-row {
+  margin: 0;
+}
+
+body.meeting-mode .right .absent {
+  display: none !important;
+}
+
+body.meeting-mode .person-button span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.meeting-mode .person-button.in-room {
+  background: #f0f7ff;
+  border-color: rgba(43, 124, 255, 0.35);
+}
+
+#conversionHint {
+  font-size: 11px;
+  color: var(--muted);
+  padding: 6px 10px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
+
+.agenda-panel {
+  margin-bottom: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.agenda-panel h3 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.agenda-add {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.agenda-add input {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px;
+  font-size: 12px;
+}
+
+.agenda-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.agenda-empty {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.agenda-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 6px;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px;
+}
+
+.agenda-order {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.agenda-title {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+  font-size: 12px;
+}
+
+.agenda-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.agenda-actions button {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--ink);
+  padding: 4px 8px;
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.fullscreen-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  background: rgba(15, 23, 42, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fullscreen-gate[hidden] {
+  display: none;
+}
+
+.fullscreen-gate-card {
+  background: #fff;
+  border-radius: 16px;
+  max-width: 420px;
+  width: 92%;
+  padding: 20px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+  border: 1px solid var(--border);
+}
+
+.fullscreen-gate-card h2 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.fullscreen-gate-card p {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.tag-modal {
+  width: min(980px, 96vw);
+  max-height: 84vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.tag-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tag-modal-header h2 {
+  font-size: 17px;
+  margin-bottom: 4px;
+}
+
+.tag-modal-header p {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.tag-segments-list {
+  padding: 14px 20px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tag-segment-row {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  background: #f8fafc;
+}
+
+.tag-segment-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.tag-segment-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  align-items: end;
+}
+
+.tag-segment-grid label {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  color: var(--muted);
+  gap: 4px;
+}
+
+.tag-segment-grid input,
+.tag-segment-grid select {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px;
+  font-size: 12px;
+  color: var(--ink);
+  background: #fff;
+}
+
+.tag-modal-actions {
+  border-top: 1px solid var(--border);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.tag-lock-hint {
+  margin-right: auto;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.tag-segment-row.invalid {
+  border-color: #f4a9a9;
+  background: #fff6f6;
+}
+
+.tag-segment-row.invalid .tag-agenda-title {
+  border-color: #f18484;
+}
+
+.history-pill {
+  font-size: 10px;
+  border-radius: 999px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  background: #fff3cd;
+  color: #92400e;
+}
+
+.history-pill.done {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.v2-actions {
+  gap: 6px;
+}
+
+.v2-actions button.history-continue,
+.v2-actions button.history-replay {
+  text-transform: none;
+  letter-spacing: 0;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  background: #f8fafc;
+  color: var(--ink);
+}
+
+@media (max-width: 860px) {
+  .tag-segment-grid {
+    grid-template-columns: 1fr;
+  }
+}
+    </style>
   </head>
   <body>
     <header class="topbar">
@@ -30,13 +1772,26 @@
         <div class="rec-speaker">
           <strong id="currentSpeaker">None</strong>
         </div>
+        <div id="partIndicator" class="part-indicator" aria-live="polite">
+          <span class="label">Current Part</span>
+          <strong id="partNumberDisplay">P1</strong>
+          <span id="partStateDisplay" class="meta">Ready</span>
+        </div>
         <div class="rec-buttons">
-          <button id="startBtn" class="primary">Record</button>
-          <button id="stopBtn" class="danger" disabled>Stop</button>
+          <button id="startBtn" class="primary">Start Recording</button>
+          <button id="segmentBtn" class="ghost" disabled>Next Agenda Item</button>
+          <button id="stopBtn" class="danger" disabled>End Recording</button>
           <button id="replayBtn" class="ghost" disabled>Replay</button>
           <button id="exportBtn" class="ghost" disabled>Export</button>
-          <button id="newSessionBtn" class="ghost-danger">New</button>
+          <button id="fullscreenBtn" class="icon-btn" title="Exit Fullscreen" aria-label="Exit Fullscreen">
+            <i data-lucide="minimize"></i>
+          </button>
+          <button id="railToggleBtn" class="icon-btn" title="Show People" aria-label="Show People">
+            <i data-lucide="panel-right-open"></i>
+          </button>
+          <button id="newSessionBtn" class="ghost-danger">End Session</button>
         </div>
+        <div id="conversionHint" hidden></div>
       </div>
       <div class="topbar-right">
         <button id="historyBtn" class="icon-btn" title="Session History">
@@ -67,6 +1822,15 @@
       </section>
 
       <aside class="right">
+        <div class="agenda-panel" id="agendaPanel" hidden>
+          <h3>Agenda</h3>
+          <div class="agenda-add">
+            <input id="agendaInput" type="text" placeholder="Add agenda item" />
+            <button id="agendaAddBtn" class="ghost">Add</button>
+          </div>
+          <div id="agendaList" class="agenda-list"></div>
+        </div>
+
         <div class="panel people">
           <div class="people-header">
             <h2>People</h2>
@@ -111,13 +1875,24 @@
       </aside>
     </main>
 
+    <div id="fullscreenGate" class="fullscreen-gate" hidden>
+      <div class="fullscreen-gate-card">
+        <h2>Fullscreen Required</h2>
+        <p>Stage 2 recording is locked to fullscreen mode. Enter fullscreen to continue recording.</p>
+        <button id="fullscreenGateBtn" class="primary">Enter Fullscreen</button>
+      </div>
+    </div>
+
     <div id="historyModal" class="modal" hidden>
       <div class="modal-content history-modal">
         <button class="modal-close" id="closeHistoryBtn" aria-label="Close history">
           <i data-lucide="x"></i>
         </button>
         <div class="modal-header-simple">
-          <h2>Session History</h2>
+          <div class="modal-header-row">
+            <h2>Session History</h2>
+            <button id="historyNewBtn" class="ghost">New Session</button>
+          </div>
         </div>
         <div class="history-list" id="historyList">
           <p class="empty-state">No saved sessions yet.</p>
@@ -130,19 +1905,34 @@
         <button id="closeModalBtn" class="modal-close" aria-label="Close replay">
           <i data-lucide="x"></i>
         </button>
-        <div class="replay-layout">
-          <div class="replay-player">
-            <div class="replay-player-label">Audio</div>
-            <audio id="replayAudioModal" controls></audio>
-            <div class="replay-speaker-now">
-              <span class="speaker-label">Speaking:</span>
-              <strong id="modalCurrentSpeaker">—</strong>
-            </div>
+        <div class="replay-header">
+          <h2>Replay Session</h2>
+          <p id="replaySummary" class="replay-summary"></p>
+        </div>
+        <div id="replayClipList" class="replay-clip-list"></div>
+        <div class="replay-main">
+          <audio id="replayAudioModal" controls></audio>
+          <div class="replay-speaker-now">
+            <span class="speaker-label">Speaking:</span>
+            <strong id="modalCurrentSpeaker">—</strong>
           </div>
-          <div class="replay-timeline">
-            <div class="timeline-header">Speaker Log</div>
-            <div class="timeline-log" id="timelineLog"></div>
-          </div>
+          <div class="timeline-header">Speaker Log</div>
+          <div class="timeline-log" id="timelineLog"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tagModal" class="modal" hidden>
+      <div class="modal-content tag-modal">
+        <div class="tag-modal-header">
+          <h2>Tag Segments Before Export</h2>
+          <p>Key in agenda items here before export. Assign each recorded segment to one agenda item (or leave as Unassigned). <strong id="tagModalPart"></strong></p>
+        </div>
+        <div id="tagSegmentsList" class="tag-segments-list"></div>
+        <div class="tag-modal-actions">
+          <span id="tagLockHint" class="tag-lock-hint" hidden>Label all segments to continue.</span>
+          <button id="tagCloseBtn" class="ghost">Close</button>
+          <button id="tagSaveBtn" class="primary">Save Tags</button>
         </div>
       </div>
     </div>
@@ -178,6 +1968,3991 @@
     </div>
 
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script>
+
+// IndexedDB for persistent audio storage
+const DB_NAME = "MinutesTakerDB";
+const DB_VERSION = 1;
+const AUDIO_STORE = "audioBlobs";
+
+let db = null;
+
+function openDatabase() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      db = request.result;
+      resolve(db);
+    };
+
+    request.onupgradeneeded = (event) => {
+      const database = event.target.result;
+      if (!database.objectStoreNames.contains(AUDIO_STORE)) {
+        database.createObjectStore(AUDIO_STORE, { keyPath: "id" });
+      }
+    };
+  });
+}
+
+function saveAudioToIndexedDB(sessionId, blob) {
+  return new Promise((resolve, reject) => {
+    const run = () => {
+      const transaction = db.transaction([AUDIO_STORE], "readwrite");
+      const store = transaction.objectStore(AUDIO_STORE);
+      const request = store.put({ id: sessionId, blob: blob });
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    };
+
+    if (!db) {
+      openDatabase()
+        .then(run)
+        .catch(reject);
+      return;
+    }
+    run();
+  });
+}
+
+function getAudioFromIndexedDB(sessionId) {
+  return new Promise((resolve, reject) => {
+    const run = () => {
+      const transaction = db.transaction([AUDIO_STORE], "readonly");
+      const store = transaction.objectStore(AUDIO_STORE);
+      const request = store.get(sessionId);
+
+      request.onsuccess = () => {
+        const result = request.result;
+        resolve(result ? result.blob : null);
+      };
+      request.onerror = () => reject(request.error);
+    };
+
+    if (!db) {
+      openDatabase()
+        .then(run)
+        .catch(reject);
+      return;
+    }
+    run();
+  });
+}
+
+function deleteAudioFromIndexedDB(sessionId) {
+  return new Promise((resolve, reject) => {
+    const run = () => {
+      const transaction = db.transaction([AUDIO_STORE], "readwrite");
+      const store = transaction.objectStore(AUDIO_STORE);
+      const request = store.delete(sessionId);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    };
+
+    if (!db) {
+      openDatabase()
+        .then(run)
+        .catch(reject);
+      return;
+    }
+    run();
+  });
+}
+
+const TABLE_SIZE = { width: 240, height: 150 };
+const CIRCLE_SIZE = 150;
+const RECT_SIZE = { width: 220, height: 130 };
+const PERSON_SIZE = 72;
+const TOUR_KEY = "minutesTourSeen";
+
+const state = {
+  stage: 1,
+  tables: [],
+  people: [],
+  drag: null,
+  currentSpeakerId: null,
+  recorder: null,
+  recording: false,
+  startTime: null,
+  timerInterval: null,
+  recordingMime: "",
+  lastRecordingBlob: null,
+  chunks: [],
+  speakerLog: [],
+  sessionHistory: [],
+  currentSessionName: "",
+  guests: [],
+  membersData: [],
+  photoMap: new Map(),
+  photoUrls: [],
+  tourIndex: 0,
+  recordingParts: [],
+  nextPartNumber: 1,
+  currentPartNumber: null,
+};
+
+const elements = {
+  currentDate: document.getElementById("currentDate"),
+  canvas: document.getElementById("canvas"),
+  canvasHint: document.getElementById("canvasHint"),
+  addTableBtn: document.getElementById("addTableBtn"),
+  addCircleBtn: document.getElementById("addCircleBtn"),
+  addRectBtn: document.getElementById("addRectBtn"),
+  clearTablesBtn: document.getElementById("clearTablesBtn"),
+  peopleList: document.getElementById("peopleList"),
+  peopleHint: document.getElementById("peopleHint"),
+  dataImport: document.getElementById("dataImport"),
+  guestAdd: document.getElementById("guestAdd"),
+  guestNameInput: document.getElementById("guestNameInput"),
+  addGuestBtn: document.getElementById("addGuestBtn"),
+  csvInput: document.getElementById("csvInput"),
+  csvPickBtn: document.getElementById("csvPickBtn"),
+  csvTemplateLink: document.getElementById("csvTemplateLink"),
+  csvStatus: document.getElementById("csvStatus"),
+  photosInput: document.getElementById("photosInput"),
+  photosPickBtn: document.getElementById("photosPickBtn"),
+  photosStatus: document.getElementById("photosStatus"),
+  absentBox: document.getElementById("absentBox"),
+  absentList: document.getElementById("absentList"),
+  stage1Controls: document.getElementById("stage1Controls"),
+  stage2Controls: document.getElementById("stage2Controls"),
+  confirmSetupBtn: document.getElementById("confirmSetupBtn"),
+  sessionName: document.getElementById("sessionName"),
+  startBtn: document.getElementById("startBtn"),
+  stopBtn: document.getElementById("stopBtn"),
+  recStatus: document.getElementById("recStatus"),
+  recTimer: document.getElementById("recTimer"),
+  currentSpeaker: document.getElementById("currentSpeaker"),
+  partIndicator: document.getElementById("partIndicator"),
+  partNumberDisplay: document.getElementById("partNumberDisplay"),
+  partStateDisplay: document.getElementById("partStateDisplay"),
+  exportBtn: document.getElementById("exportBtn"),
+  replayBtn: document.getElementById("replayBtn"),
+  replayModal: document.getElementById("replayModal"),
+  replayAudioModal: document.getElementById("replayAudioModal"),
+  closeModalBtn: document.getElementById("closeModalBtn"),
+  replayClipList: document.getElementById("replayClipList"),
+  replaySummary: document.getElementById("replaySummary"),
+  modalCurrentSpeaker: document.getElementById("modalCurrentSpeaker"),
+  timelineLog: document.getElementById("timelineLog"),
+  newSessionBtn: document.getElementById("newSessionBtn"),
+  historyBtn: document.getElementById("historyBtn"),
+  historyModal: document.getElementById("historyModal"),
+  closeHistoryBtn: document.getElementById("closeHistoryBtn"),
+  historyList: document.getElementById("historyList"),
+  tourOverlay: document.getElementById("tourOverlay"),
+  tourSpotlight: document.getElementById("tourSpotlight"),
+  tourCard: document.getElementById("tourCard"),
+  tourTitle: document.getElementById("tourTitle"),
+  tourText: document.getElementById("tourText"),
+  tourStepCount: document.getElementById("tourStepCount"),
+  tourNextBtn: document.getElementById("tourNextBtn"),
+  tourBackBtn: document.getElementById("tourBackBtn"),
+  tourSkipBtn: document.getElementById("tourSkipBtn"),
+  tourArrow: document.getElementById("tourArrow"),
+};
+
+const tourSteps = [
+  {
+    selector: "#sessionName",
+    title: "Name the session",
+    text: "Give this meeting a clear name before you start.",
+  },
+  {
+    selector: "#addTableBtn",
+    title: "Add tables",
+    text: "Add oval, circle, or rectangle tables to match your room layout.",
+  },
+  {
+    selector: "#csvPickBtn",
+    title: "Upload CSV",
+    text: "Load your roster with name, photo_filename, and optional alias.",
+  },
+  {
+    selector: "#photosPickBtn",
+    title: "Upload photos",
+    text: "Match photo filenames exactly to show faces.",
+  },
+  {
+    selector: "#guestNameInput",
+    title: "Add guests",
+    text: "Add guests manually here if they are not in the CSV.",
+  },
+  {
+    selector: "#confirmSetupBtn",
+    title: "Start the session",
+    text: "When everything looks right, start recording.",
+  },
+];
+
+function svgAvatar(name) {
+  const hue = Math.floor(Math.random() * 360);
+  const initials = name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160">
+      <defs>
+        <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0%" stop-color="hsl(${hue}, 70%, 70%)"/>
+          <stop offset="100%" stop-color="hsl(${(hue + 40) % 360}, 70%, 55%)"/>
+        </linearGradient>
+      </defs>
+      <rect width="160" height="160" rx="36" fill="url(#g)" />
+      <text x="50%" y="55%" text-anchor="middle" fill="#ffffff" font-size="64" font-family="Arial" font-weight="600">${initials}</text>
+    </svg>
+  `;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+function normalizeName(name) {
+  return name.trim().replace(/\s+/g, " ");
+}
+
+function createPerson(name, options = {}) {
+  const isGuest = Boolean(options.isGuest);
+  const avatar = options.avatar || svgAvatar(name);
+  return {
+    id:
+      options.id ||
+      `p-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    name,
+    avatar,
+    placement: null,
+    absent: false,
+    isGuest,
+    alias: options.alias ?? "",
+    photoFilename: options.photoFilename ?? "",
+  };
+}
+
+function setPersonImage(img, person) {
+  img.src = person.avatar;
+  img.alt = person.name;
+  img.onerror = () => {
+    img.onerror = null;
+    img.src = svgAvatar(person.name);
+  };
+}
+
+function clearGuestStorage() {
+  localStorage.removeItem("minutesGuests");
+}
+
+function clearPhotoUrls() {
+  state.photoUrls.forEach((url) => URL.revokeObjectURL(url));
+  state.photoUrls = [];
+}
+
+function setPhotoMapFromFiles(files) {
+  clearPhotoUrls();
+  state.photoMap = new Map();
+  Array.from(files).forEach((file) => {
+    const url = URL.createObjectURL(file);
+    state.photoUrls.push(url);
+    state.photoMap.set(file.name, url);
+  });
+}
+
+function applyRoster(records, { showAlerts = true, extraWarnings = [] } = {}) {
+  const errors = [];
+  const warnings = [];
+  const people = [];
+  const seenNames = new Set();
+
+  records.forEach((record, index) => {
+    const row = index + 2;
+    const name = normalizeName(record.name || "");
+    if (!name) {
+      errors.push(`Row ${row}: missing name.`);
+      return;
+    }
+    const key = name.toLowerCase();
+    if (seenNames.has(key)) {
+      errors.push(`Row ${row}: duplicate name "${name}".`);
+      return;
+    }
+    seenNames.add(key);
+
+    const photoFilename = (record.photo_filename || "").trim();
+    if (!photoFilename) {
+      errors.push(`Row ${row}: missing photo_filename.`);
+      return;
+    }
+    let avatar = svgAvatar(name);
+    if (photoFilename) {
+      const match = state.photoMap.get(photoFilename);
+      if (match) {
+        avatar = match;
+      } else {
+        warnings.push(`Missing image for "${name}": ${photoFilename}`);
+      }
+    }
+
+    people.push(
+      createPerson(name, {
+        id: `p-${index}`,
+        isGuest: false,
+        alias: record.alias ?? "",
+        photoFilename,
+        avatar,
+      })
+    );
+  });
+
+  if (people.length === 0) {
+    errors.push("No valid rows found in the CSV.");
+  } else {
+    const guestPeople = state.people.filter((p) => p.isGuest);
+    const existingNames = new Set(people.map((p) => p.name.toLowerCase()));
+    const guestsToAppend = guestPeople.filter(
+      (guest) => !existingNames.has(guest.name.toLowerCase())
+    );
+    state.people = people.concat(guestsToAppend);
+    renderPeopleList();
+    renderAbsentList();
+    renderCanvas();
+  }
+
+  const mergedWarnings = warnings.concat(extraWarnings);
+  if (showAlerts) {
+    if (errors.length) {
+      showAlertModal("CSV Import Errors", errors, "error");
+    } else if (mergedWarnings.length) {
+      showAlertModal("CSV Imported With Warnings", mergedWarnings, "warning");
+    } else {
+      showAlertModal("CSV Imported", ["Roster loaded successfully."], "success");
+    }
+  }
+}
+
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (char === '"') {
+      if (inQuotes && text[i + 1] === '"') {
+        field += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+    if (char === "," && !inQuotes) {
+      row.push(field);
+      field = "";
+      continue;
+    }
+    if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && text[i + 1] === "\n") {
+        i++;
+      }
+      row.push(field);
+      field = "";
+      if (row.some((value) => value.trim() !== "")) {
+        rows.push(row);
+      }
+      row = [];
+      continue;
+    }
+    field += char;
+  }
+  row.push(field);
+  if (row.some((value) => value.trim() !== "")) {
+    rows.push(row);
+  }
+  return rows;
+}
+
+function parseMemberCSV(text) {
+  const rows = parseCSV(text);
+  if (rows.length === 0) {
+    return { records: [], errors: ["CSV is empty."] };
+  }
+  const headers = rows[0].map((h) => h.trim().toLowerCase());
+  const nameIndex = headers.indexOf("name");
+  const photoIndex = headers.indexOf("photo_filename");
+  const aliasIndex = headers.indexOf("alias");
+  const errors = [];
+
+  if (nameIndex === -1) errors.push('Missing "name" column.');
+  if (photoIndex === -1) errors.push('Missing "photo_filename" column.');
+
+  if (errors.length) {
+    return { records: [], errors };
+  }
+
+  const records = [];
+  const warnings = [];
+  rows.slice(1).forEach((row) => {
+    const name = row[nameIndex] ?? "";
+    const photo_filename = row[photoIndex] ?? "";
+    const alias = aliasIndex === -1 ? "" : row[aliasIndex] ?? "";
+    const isExample =
+      String(name).trim().toLowerCase() === "example name" &&
+      String(photo_filename).trim().toLowerCase() === "example.jpg";
+    if (isExample) {
+      warnings.push("Removed template example row.");
+      return;
+    }
+    records.push({ name, photo_filename, alias });
+  });
+
+  return { records, errors: [], warnings };
+}
+
+function downloadCsvTemplate() {
+  const template = [
+    "name,photo_filename,alias",
+  ].join("\n");
+  const blob = new Blob([template], { type: "text/csv" });
+  triggerDownload(blob, "members_template.csv");
+}
+
+function findPersonByName(name) {
+  const needle = name.toLowerCase();
+  return state.people.find((person) => person.name.toLowerCase() === needle);
+}
+
+function addGuestToState(rawName) {
+  const name = normalizeName(rawName);
+  if (!name) {
+    return false;
+  }
+  if (findPersonByName(name)) {
+    return false;
+  }
+  const person = createPerson(name, { isGuest: true });
+  state.people.push(person);
+  return true;
+}
+
+function removeGuest(personId) {
+  const person = state.people.find((p) => p.id === personId);
+  if (!person || !person.isGuest) {
+    return;
+  }
+  state.people = state.people.filter((p) => p.id !== personId);
+  if (state.currentSpeakerId === personId) {
+    setCurrentSpeaker(null);
+  }
+  renderPeopleList();
+  renderAbsentList();
+  renderCanvas();
+}
+
+function updateDateTime() {
+  const now = new Date();
+  const dateString = now.toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+  elements.currentDate.textContent = dateString;
+}
+
+function formatDuration(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+  const seconds = String(totalSeconds % 60).padStart(2, "0");
+  return `${minutes}:${seconds}`;
+}
+
+function sanitizeFilename(value) {
+  const cleaned = value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-_]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return cleaned || "session";
+}
+
+function updatePartUi() {
+  if (state.recording) {
+    elements.startBtn.textContent = `Recording P${state.currentPartNumber}`;
+    elements.recStatus.textContent = `Recording • Part ${state.currentPartNumber}`;
+    return;
+  }
+  elements.startBtn.textContent =
+    state.recordingParts.length > 0
+      ? `Continue P${state.nextPartNumber}`
+      : "Record Part 1";
+  if (state.recordingParts.length > 0) {
+    elements.recStatus.textContent = `Idle • ${state.recordingParts.length} part${state.recordingParts.length === 1 ? "" : "s"} saved`;
+  } else {
+    elements.recStatus.textContent = "Idle";
+  }
+}
+
+function setStage(stage) {
+  state.stage = stage;
+  const isStage1 = stage === 1;
+  document.body.classList.toggle("meeting-mode", !isStage1);
+  elements.stage1Controls.hidden = !isStage1;
+  elements.stage2Controls.hidden = isStage1;
+  if (elements.dataImport) {
+    elements.dataImport.hidden = false;
+  }
+  if (elements.guestAdd) {
+    elements.guestAdd.hidden = !isStage1;
+  }
+
+  if (!isStage1) {
+    const name = elements.sessionName.value.trim();
+    if (name) {
+      state.currentSessionName = name;
+    }
+    clearTableSelection();
+    endTour();
+    enterFullscreen();
+  } else {
+    exitFullscreen();
+  }
+
+  elements.canvasHint.textContent = isStage1
+    ? "Drag a person onto the board to place them."
+    : "Drag to place. Click a person to log speaker.";
+  elements.peopleHint.textContent = isStage1
+    ? "Drag onto the board. Drop into Absent to mark absent."
+    : "Drag to place. Click to log speaker.";
+}
+
+function enterFullscreen() {
+  if (!document.fullscreenEnabled || document.fullscreenElement) {
+    return;
+  }
+  document.documentElement.requestFullscreen().catch(() => {
+    // Ignore fullscreen rejection (for example browser policy/user cancel).
+  });
+}
+
+function exitFullscreen() {
+  if (!document.fullscreenElement) {
+    return;
+  }
+  document.exitFullscreen().catch(() => {
+    // Ignore fullscreen exit failures.
+  });
+}
+
+function renderPeopleList() {
+  elements.peopleList.innerHTML = "";
+  state.people
+    .filter((person) => !person.placement && !person.absent)
+    .forEach((person) => {
+    const button = document.createElement("button");
+    button.className = "person-button";
+    button.type = "button";
+    if (state.currentSpeakerId === person.id) {
+      button.classList.add("speaker-active");
+    }
+
+    const img = document.createElement("img");
+    setPersonImage(img, person);
+
+    const label = document.createElement("span");
+    label.textContent = person.name;
+
+    button.appendChild(img);
+    button.appendChild(label);
+    if (person.isGuest && state.stage === 1) {
+      const remove = document.createElement("span");
+      remove.className = "guest-delete";
+      remove.setAttribute("role", "button");
+      remove.setAttribute("aria-label", `Remove ${person.name}`);
+      remove.innerHTML = '<i data-lucide="x"></i>';
+      remove.addEventListener("pointerdown", (event) => {
+        event.stopPropagation();
+      });
+      remove.addEventListener("click", (event) => {
+        event.stopPropagation();
+        event.preventDefault();
+        removeGuest(person.id);
+      });
+      button.appendChild(remove);
+    }
+
+    attachPersonHandlers(button, person);
+    elements.peopleList.appendChild(button);
+  });
+  refreshIcons();
+}
+
+function renderAbsentList() {
+  elements.absentList.innerHTML = "";
+  state.people
+    .filter((person) => person.absent)
+    .forEach((person) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "absent-item";
+      if (state.currentSpeakerId === person.id) {
+        item.classList.add("speaker-active");
+      }
+      const img = document.createElement("img");
+      setPersonImage(img, person);
+      const label = document.createElement("span");
+      label.textContent = person.name;
+      item.appendChild(img);
+      item.appendChild(label);
+      if (person.isGuest && state.stage === 1) {
+        const remove = document.createElement("span");
+        remove.className = "guest-delete";
+        remove.setAttribute("role", "button");
+        remove.setAttribute("aria-label", `Remove ${person.name}`);
+        remove.innerHTML = '<i data-lucide="x"></i>';
+        remove.addEventListener("pointerdown", (event) => {
+          event.stopPropagation();
+        });
+        remove.addEventListener("click", (event) => {
+          event.stopPropagation();
+          event.preventDefault();
+          removeGuest(person.id);
+        });
+        item.appendChild(remove);
+      }
+      attachPersonHandlers(item, person);
+      elements.absentList.appendChild(item);
+    });
+  refreshIcons();
+}
+
+function attachPersonHandlers(button, person) {
+  button.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) {
+      return;
+    }
+    event.preventDefault();
+    beginPersonDrag(person, event);
+  });
+}
+
+function beginPersonDrag(person, event) {
+  const pointerId = event.pointerId;
+  const startX = event.clientX;
+  const startY = event.clientY;
+  const origin = person.absent ? "absent" : person.placement ? "canvas" : "list";
+
+  state.drag = {
+    type: "person",
+    personId: person.id,
+    pointerId,
+    startX,
+    startY,
+    dragging: false,
+    ghost: null,
+    origin,
+    overCanvas: false,
+    overAbsent: false,
+  };
+
+  const handleMove = (moveEvent) => {
+    if (!state.drag || state.drag.pointerId !== pointerId) {
+      return;
+    }
+    const dx = moveEvent.clientX - startX;
+    const dy = moveEvent.clientY - startY;
+    if (!state.drag.dragging && Math.hypot(dx, dy) > 6) {
+      state.drag.dragging = true;
+      state.drag.ghost = createDragGhost(person);
+    }
+    if (state.drag.dragging) {
+      moveGhost(state.drag.ghost, moveEvent.clientX, moveEvent.clientY);
+      const overCanvas = isOverCanvas(moveEvent.clientX, moveEvent.clientY);
+      const overAbsent = isOverAbsent(moveEvent.clientX, moveEvent.clientY);
+      setCanvasHover(overCanvas);
+      setAbsentHover(overAbsent);
+      state.drag.overCanvas = overCanvas;
+      state.drag.overAbsent = overAbsent;
+    }
+  };
+
+  const handleUp = (upEvent) => {
+    document.removeEventListener("pointermove", handleMove);
+    document.removeEventListener("pointerup", handleUp);
+    if (!state.drag || state.drag.pointerId !== pointerId) {
+      return;
+    }
+
+    if (state.drag.dragging) {
+      if (state.drag.overAbsent) {
+        markAbsent(person.id);
+      } else if (state.drag.overCanvas) {
+        const coords = canvasCoords(upEvent.clientX, upEvent.clientY);
+        placePersonAt(person.id, coords.x, coords.y);
+      } else if (state.drag.origin === "canvas") {
+        // Keep them where they were if dropped outside.
+      } else {
+        // Return to list by clearing placement/absent.
+        clearPersonStatus(person.id);
+      }
+    } else if (state.stage === 2) {
+      setCurrentSpeaker(person);
+      if (state.recording) {
+        addSpeakerLog(person);
+      }
+    }
+
+    cleanupDrag();
+  };
+
+  document.addEventListener("pointermove", handleMove);
+  document.addEventListener("pointerup", handleUp);
+}
+
+function createDragGhost(person) {
+  const ghost = document.createElement("div");
+  ghost.className = "drag-ghost";
+  const img = document.createElement("img");
+  setPersonImage(img, person);
+  ghost.appendChild(img);
+  document.body.appendChild(ghost);
+  return ghost;
+}
+
+function moveGhost(ghost, x, y) {
+  if (!ghost) {
+    return;
+  }
+  const offset = PERSON_SIZE / 2;
+  ghost.style.transform = `translate3d(${x - offset}px, ${y - offset}px, 0)`;
+}
+
+function cleanupDrag() {
+  if (state.drag && state.drag.ghost) {
+    state.drag.ghost.remove();
+  }
+  setCanvasHover(false);
+  setAbsentHover(false);
+  state.drag = null;
+}
+
+function isOverCanvas(x, y) {
+  const rect = elements.canvas.getBoundingClientRect();
+  return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+}
+
+function canvasCoords(x, y) {
+  const rect = elements.canvas.getBoundingClientRect();
+  const offset = PERSON_SIZE / 2;
+  const rawX = x - rect.left - offset;
+  const rawY = y - rect.top - offset;
+  return {
+    x: Math.min(Math.max(0, rawX), rect.width - PERSON_SIZE),
+    y: Math.min(Math.max(0, rawY), rect.height - PERSON_SIZE),
+  };
+}
+
+function setCanvasHover(active) {
+  elements.canvas.classList.toggle("drop-target", active);
+}
+
+function isOverAbsent(x, y) {
+  const rect = elements.absentBox.getBoundingClientRect();
+  return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+}
+
+function setAbsentHover(active) {
+  elements.absentBox.classList.toggle("drop-target", active);
+}
+
+function renderCanvas() {
+  elements.canvas.innerHTML = "";
+  const front = document.createElement("div");
+  front.className = "front-label";
+  front.textContent = "Front";
+  elements.canvas.appendChild(front);
+
+  state.tables.forEach((table) => {
+    const node = document.createElement("div");
+    node.className = `table table-${table.shape || "oval"}`;
+    if (state.stage !== 1) {
+      node.classList.add("table-locked");
+    }
+    if (selectedTableId && table.id === selectedTableId) {
+      node.classList.add("table-selected");
+    }
+    node.dataset.id = table.id;
+    node.style.left = `${table.x}px`;
+    node.style.top = `${table.y}px`;
+    node.style.width = `${table.width || TABLE_SIZE.width}px`;
+    node.style.height = `${table.height || TABLE_SIZE.height}px`;
+    node.textContent = table.label;
+    node.addEventListener("pointerdown", (event) =>
+      handleTablePointerDown(event, table)
+    );
+    if (state.stage === 1) {
+      node.appendChild(createTableDelete(table.id));
+      node.appendChild(createResizeHandle("e"));
+      node.appendChild(createResizeHandle("s"));
+      node.appendChild(createResizeHandle("se"));
+    }
+    elements.canvas.appendChild(node);
+  });
+
+  state.people.forEach((person) => {
+    if (!person.placement) {
+      return;
+    }
+    const chip = document.createElement("button");
+    chip.className = "seat-person";
+    chip.type = "button";
+    if (state.currentSpeakerId === person.id) {
+      chip.classList.add("speaker-active");
+    }
+    chip.dataset.id = person.id;
+    chip.style.left = `${person.placement.x}px`;
+    chip.style.top = `${person.placement.y}px`;
+    const img = document.createElement("img");
+    setPersonImage(img, person);
+    const label = document.createElement("span");
+    label.textContent = person.name;
+    chip.appendChild(img);
+    chip.appendChild(label);
+    if (person.isGuest && state.stage === 1) {
+      const remove = document.createElement("span");
+      remove.className = "guest-delete";
+      remove.setAttribute("role", "button");
+      remove.setAttribute("aria-label", `Remove ${person.name}`);
+      remove.innerHTML = '<i data-lucide="x"></i>';
+      remove.addEventListener("pointerdown", (event) => {
+        event.stopPropagation();
+      });
+      remove.addEventListener("click", (event) => {
+        event.stopPropagation();
+        event.preventDefault();
+        removeGuest(person.id);
+      });
+      chip.appendChild(remove);
+    }
+    chip.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) {
+        return;
+      }
+      event.preventDefault();
+      beginPersonDrag(person, event);
+    });
+    elements.canvas.appendChild(chip);
+  });
+  refreshIcons();
+}
+
+function placePersonAt(personId, x, y) {
+  const person = state.people.find((p) => p.id === personId);
+  if (!person) {
+    return;
+  }
+  person.placement = { x, y };
+  person.absent = false;
+  renderCanvas();
+  renderPeopleList();
+  renderAbsentList();
+}
+
+function markAbsent(personId) {
+  const person = state.people.find((p) => p.id === personId);
+  if (!person) {
+    return;
+  }
+  person.absent = true;
+  person.placement = null;
+  renderCanvas();
+  renderPeopleList();
+  renderAbsentList();
+}
+
+function clearPersonStatus(personId) {
+  const person = state.people.find((p) => p.id === personId);
+  if (!person) {
+    return;
+  }
+  person.absent = false;
+  person.placement = null;
+  renderCanvas();
+  renderPeopleList();
+  renderAbsentList();
+}
+
+function addTable() {
+  addTableWithShape("oval");
+}
+
+function addTableWithShape(shape) {
+  const id = `t-${Date.now()}`;
+  const offset = state.tables.length * 18;
+  const size =
+    shape === "circle"
+      ? { width: CIRCLE_SIZE, height: CIRCLE_SIZE }
+      : shape === "rect"
+        ? { width: RECT_SIZE.width, height: RECT_SIZE.height }
+        : { width: TABLE_SIZE.width, height: TABLE_SIZE.height };
+  state.tables.push({
+    id,
+    label: `Table ${state.tables.length + 1}`,
+    x: 40 + offset,
+    y: 40 + offset,
+    width: size.width,
+    height: size.height,
+    shape,
+  });
+  renderCanvas();
+}
+
+function clearTables() {
+  state.tables = [];
+  state.people.forEach((person) => {
+    person.placement = null;
+    person.absent = false;
+  });
+  renderCanvas();
+  renderPeopleList();
+  renderAbsentList();
+}
+
+let tableDrag = null;
+let tableResize = null;
+let selectedTableId = null;
+
+function handleTablePointerDown(event, table) {
+  if (state.drag && state.drag.type === "person") {
+    return;
+  }
+  if (state.stage !== 1) {
+    return;
+  }
+  if (event.button !== undefined && event.button !== 0) {
+    return;
+  }
+  if (event.target && event.target.classList.contains("resize-handle")) {
+    return;
+  }
+  selectedTableId = table.id;
+  event.currentTarget.classList.add("table-selected");
+  const rect = event.currentTarget.getBoundingClientRect();
+  tableDrag = {
+    tableId: table.id,
+    offsetX: event.clientX - rect.left,
+    offsetY: event.clientY - rect.top,
+    pointerId: event.pointerId,
+  };
+  try {
+    event.currentTarget.setPointerCapture(event.pointerId);
+  } catch (err) {
+    console.warn("Unable to set pointer capture for table drag:", err);
+  }
+  event.currentTarget.addEventListener("pointermove", handleTablePointerMove);
+  event.currentTarget.addEventListener("pointerup", handleTablePointerUp, {
+    once: true,
+  });
+}
+
+function handleTablePointerMove(event) {
+  if (!tableDrag) {
+    return;
+  }
+  const table = state.tables.find((t) => t.id === tableDrag.tableId);
+  if (!table) {
+    return;
+  }
+  const bounds = elements.canvas.getBoundingClientRect();
+  const width = table.width || TABLE_SIZE.width;
+  const height = table.height || TABLE_SIZE.height;
+  const x = Math.min(
+    Math.max(0, event.clientX - bounds.left - tableDrag.offsetX),
+    bounds.width - width
+  );
+  const y = Math.min(
+    Math.max(0, event.clientY - bounds.top - tableDrag.offsetY),
+    bounds.height - height
+  );
+  table.x = x;
+  table.y = y;
+  event.currentTarget.style.left = `${x}px`;
+  event.currentTarget.style.top = `${y}px`;
+}
+
+function handleTablePointerUp(event) {
+  if (tableDrag) {
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    event.currentTarget.removeEventListener("pointermove", handleTablePointerMove);
+  }
+  tableDrag = null;
+  renderCanvas();
+}
+
+function clearTableSelection() {
+  selectedTableId = null;
+  renderCanvas();
+}
+
+function createResizeHandle(direction) {
+  const handle = document.createElement("span");
+  handle.className = `resize-handle resize-${direction}`;
+  handle.addEventListener("pointerdown", (event) =>
+    startResize(event, direction)
+  );
+  return handle;
+}
+
+function startResize(event, direction) {
+  event.stopPropagation();
+  if (state.stage !== 1) {
+    return;
+  }
+  if (event.button !== undefined && event.button !== 0) {
+    return;
+  }
+  const tableEl = event.currentTarget.closest(".table");
+  if (!tableEl) return;
+  const tableId = tableEl.dataset.id;
+  const table = state.tables.find((t) => t.id === tableId);
+  if (!table) return;
+  const rect = tableEl.getBoundingClientRect();
+  tableResize = {
+    tableId,
+    direction,
+    startX: event.clientX,
+    startY: event.clientY,
+    startWidth: rect.width,
+    startHeight: rect.height,
+  };
+  try {
+    tableEl.setPointerCapture(event.pointerId);
+  } catch (err) {
+    console.warn("Unable to set pointer capture for table resize:", err);
+  }
+  tableEl.addEventListener("pointermove", handleResizeMove);
+  tableEl.addEventListener("pointerup", handleResizeUp, { once: true });
+}
+
+function handleResizeMove(event) {
+  if (!tableResize) return;
+  const table = state.tables.find((t) => t.id === tableResize.tableId);
+  if (!table) return;
+  const bounds = elements.canvas.getBoundingClientRect();
+  const dx = event.clientX - tableResize.startX;
+  const dy = event.clientY - tableResize.startY;
+  const minSize = 80;
+  let width = tableResize.startWidth;
+  let height = tableResize.startHeight;
+
+  if (tableResize.direction.includes("e")) {
+    width = Math.max(minSize, tableResize.startWidth + dx);
+  }
+  if (tableResize.direction.includes("s")) {
+    height = Math.max(minSize, tableResize.startHeight + dy);
+  }
+  if ((table.shape || "oval") === "circle") {
+    const size = Math.max(width, height);
+    width = size;
+    height = size;
+  }
+
+  width = Math.min(width, bounds.width - table.x);
+  height = Math.min(height, bounds.height - table.y);
+
+  table.width = width;
+  table.height = height;
+  const el = event.currentTarget;
+  el.style.width = `${width}px`;
+  el.style.height = `${height}px`;
+}
+
+function handleResizeUp(event) {
+  if (tableResize) {
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    event.currentTarget.removeEventListener("pointermove", handleResizeMove);
+  }
+  tableResize = null;
+  renderCanvas();
+}
+
+function createTableDelete(tableId) {
+  const btn = document.createElement("span");
+  btn.className = "table-delete";
+  btn.setAttribute("role", "button");
+  btn.setAttribute("aria-label", "Delete table");
+  btn.innerHTML = '<i data-lucide="x"></i>';
+  btn.addEventListener("pointerdown", (event) => {
+    event.stopPropagation();
+  });
+  btn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    state.tables = state.tables.filter((t) => t.id !== tableId);
+    renderCanvas();
+  });
+  return btn;
+}
+
+function setCurrentSpeaker(person) {
+  state.currentSpeakerId = person ? person.id : null;
+  elements.currentSpeaker.textContent = person ? person.name : "None";
+  renderPeopleList();
+  renderAbsentList();
+  renderCanvas();
+}
+
+function addSpeakerLog(person) {
+  const timestamp = Date.now() - state.startTime;
+  state.speakerLog.unshift({
+    id: `log-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    name: person.name,
+    alias: person.alias ?? "",
+    part: state.currentPartNumber,
+    time: formatDuration(timestamp),
+  });
+}
+
+
+async function startRecording() {
+  if (!navigator.mediaDevices) {
+    alert("Audio recording is not supported in this browser.");
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const preferredTypes = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/ogg;codecs=opus",
+    ];
+    let selectedType = "";
+    if (window.MediaRecorder && MediaRecorder.isTypeSupported) {
+      selectedType =
+        preferredTypes.find((type) => MediaRecorder.isTypeSupported(type)) || "";
+    }
+    const options = selectedType ? { mimeType: selectedType } : undefined;
+    const recorder = new MediaRecorder(stream, options);
+    state.recorder = recorder;
+    state.currentPartNumber = state.nextPartNumber;
+    state.chunks = [];
+    state.speakerLog = [];
+    elements.recTimer.textContent = "00:00";
+    state.recording = true;
+    state.startTime = Date.now();
+    const currentSpeaker = state.people.find((person) => person.id === state.currentSpeakerId);
+    if (currentSpeaker) {
+      addSpeakerLog(currentSpeaker);
+    }
+    state.recordingMime = recorder.mimeType || selectedType || "";
+    elements.recStatus.textContent = `Recording • Part ${state.currentPartNumber}`;
+    elements.recStatus.classList.add("recording");
+    elements.startBtn.disabled = true;
+    elements.stopBtn.disabled = false;
+    elements.exportBtn.disabled = state.recordingParts.length === 0;
+    elements.replayBtn.disabled = true;
+
+    recorder.ondataavailable = (event) => {
+      if (event.data && event.data.size > 0) {
+        state.chunks.push(event.data);
+      }
+    };
+
+    recorder.onstop = () => {
+      stream.getTracks().forEach((track) => track.stop());
+    };
+
+    recorder.start(1000);
+    updateTimer();
+    state.timerInterval = setInterval(updateTimer, 1000);
+    updatePartUi();
+  } catch (error) {
+    alert("Microphone access denied or unavailable.");
+  }
+}
+
+function updateTimer() {
+  if (!state.recording) {
+    return;
+  }
+  const elapsed = Date.now() - state.startTime;
+  elements.recTimer.textContent = formatDuration(elapsed);
+}
+
+async function stopRecording() {
+  if (!state.recorder) {
+    return;
+  }
+  state.recorder.stop();
+  state.recording = false;
+  clearInterval(state.timerInterval);
+  elements.recStatus.textContent = "Stopped";
+  elements.recStatus.classList.remove("recording");
+  elements.startBtn.disabled = false;
+  elements.stopBtn.disabled = true;
+  state.lastRecordingBlob = buildAudioBlob();
+  if (state.lastRecordingBlob && state.currentPartNumber) {
+    const partLog = [...state.speakerLog].reverse();
+    state.recordingParts.push({
+      part: state.currentPartNumber,
+      audioBlob: state.lastRecordingBlob,
+      mime: state.lastRecordingBlob.type || state.recordingMime,
+      duration: elements.recTimer.textContent,
+      speakerLog: partLog,
+      stoppedAt: new Date().toISOString(),
+    });
+    state.nextPartNumber = state.currentPartNumber + 1;
+    elements.recStatus.textContent = `Stopped • Part ${state.currentPartNumber} saved`;
+  }
+  if (state.lastRecordingBlob || state.recordingParts.length > 0) {
+    elements.replayBtn.disabled = false;
+  }
+  elements.exportBtn.disabled = state.recordingParts.length === 0;
+  updatePartUi();
+}
+
+function exportSession() {
+  if (state.recording) {
+    alert("Please stop recording before exporting.");
+    return;
+  }
+  if (!state.recordingParts.length) {
+    alert("No recorded parts yet.");
+    return;
+  }
+  const sessionLabel = state.currentSessionName || "Untitled Session";
+  const base = sanitizeFilename(sessionLabel);
+  const now = Date.now();
+  const summaryParts = state.recordingParts.map((part) => ({
+    part: part.part,
+    duration: part.duration,
+    transcript: part.speakerLog,
+    stoppedAt: part.stoppedAt,
+  }));
+  const metadata = {
+    sessionName: sessionLabel,
+    date: new Date().toLocaleDateString(),
+    totalParts: state.recordingParts.length,
+    parts: summaryParts,
+  };
+  const metaBlob = new Blob([JSON.stringify(metadata, null, 2)], {
+    type: "application/json",
+  });
+  triggerDownload(metaBlob, `minutes-${base}-${now}.json`);
+
+  state.recordingParts.forEach((part) => {
+    const partMeta = {
+      sessionName: sessionLabel,
+      date: new Date().toLocaleDateString(),
+      part: part.part,
+      duration: part.duration,
+      transcript: part.speakerLog,
+      log: part.speakerLog,
+      stoppedAt: part.stoppedAt,
+    };
+    const partMetaBlob = new Blob([JSON.stringify(partMeta, null, 2)], {
+      type: "application/json",
+    });
+    triggerDownload(
+      partMetaBlob,
+      `minutes-${base}-part-${part.part}-${now}.json`
+    );
+    triggerDownload(
+      part.audioBlob,
+      `audio-${base}-part-${part.part}-${now}.${extensionForMime(part.mime || "")}`
+    );
+  });
+}
+
+function triggerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function buildAudioBlob() {
+  if (!state.chunks.length) {
+    return null;
+  }
+  const mime = state.recordingMime || "audio/webm";
+  return new Blob(state.chunks, { type: mime });
+}
+
+function extensionForMime(mime) {
+  if (mime.includes("mpeg")) {
+    return "mp3";
+  }
+  if (mime.includes("ogg")) {
+    return "ogg";
+  }
+  if (mime.includes("webm")) {
+    return "webm";
+  }
+  return "webm";
+}
+
+let replayObjectUrl = null;
+let replayParts = [];
+let replayActiveKey = null;
+
+function parseTimeLabelToMs(label) {
+  const parts = String(label || "00:00")
+    .split(":")
+    .map((segment) => Number(segment || 0));
+  if (parts.length === 3) {
+    return ((parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0)) * 1000;
+  }
+  return ((parts[0] || 0) * 60 + (parts[1] || 0)) * 1000;
+}
+
+function normalizeReplayLog(logEntries) {
+  return (Array.isArray(logEntries) ? logEntries : [])
+    .map((entry) => ({ ...entry }))
+    .sort((a, b) => parseTimeLabelToMs(a.time) - parseTimeLabelToMs(b.time));
+}
+
+function releaseReplayAudioUrl() {
+  if (replayObjectUrl) {
+    URL.revokeObjectURL(replayObjectUrl);
+    replayObjectUrl = null;
+  }
+}
+
+function setReplaySummary(parts) {
+  if (!elements.replaySummary) return;
+  if (!parts.length) {
+    elements.replaySummary.textContent = "";
+    return;
+  }
+  const totalMs = parts.reduce(
+    (sum, part) => sum + (part.durationMs || parseTimeLabelToMs(part.duration || "00:00")),
+    0
+  );
+  elements.replaySummary.textContent = `${parts.length} clip${parts.length === 1 ? "" : "s"} • ${formatDuration(totalMs)}`;
+}
+
+function renderReplayClipButtons() {
+  if (!elements.replayClipList) return;
+  if (!replayParts.length) {
+    elements.replayClipList.innerHTML = "";
+    return;
+  }
+  elements.replayClipList.innerHTML = replayParts
+    .map((part, index) => {
+      const active = part.key === replayActiveKey ? " active" : "";
+      const duration = part.duration || formatDuration(part.durationMs || 0);
+      return `<button type="button" class="replay-clip-btn${active}" data-key="${part.key}">Clip ${index + 1} • ${duration}</button>`;
+    })
+    .join("");
+
+  elements.replayClipList.querySelectorAll(".replay-clip-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      setReplayPart(button.dataset.key);
+    });
+  });
+}
+
+function setReplayPart(key, { autoPlay = true } = {}) {
+  const part = replayParts.find((item) => item.key === key);
+  if (!part || !part.audioBlob) return;
+
+  replayActiveKey = key;
+  renderReplayClipButtons();
+  elements.replayAudioModal.pause();
+  elements.replayAudioModal.currentTime = 0;
+  releaseReplayAudioUrl();
+  replayObjectUrl = URL.createObjectURL(part.audioBlob);
+  elements.replayAudioModal.src = replayObjectUrl;
+  elements.replayAudioModal.load();
+
+  const timelineLog = normalizeReplayLog(part.speakerLog);
+  renderTimelineLog(timelineLog);
+  elements.replayAudioModal.ontimeupdate = () => updateModalSpeaker(timelineLog);
+  elements.replayAudioModal.onseeked = () => updateModalSpeaker(timelineLog);
+  elements.replayAudioModal.onseeking = () => updateModalSpeaker(timelineLog);
+  elements.replayAudioModal.onloadedmetadata = () => {
+    elements.replayAudioModal.currentTime = 0;
+    updateModalSpeaker(timelineLog);
+    if (autoPlay) {
+      elements.replayAudioModal.play().catch(() => {});
+    }
+  };
+
+  if (!autoPlay) {
+    updateModalSpeaker(timelineLog);
+  }
+}
+
+function openReplayWithParts(parts, options = {}) {
+  const validParts = (Array.isArray(parts) ? parts : [])
+    .filter((part) => part && part.audioBlob)
+    .sort((a, b) => (a.part || 0) - (b.part || 0));
+
+  if (!validParts.length) {
+    alert("Nothing to replay yet.");
+    return;
+  }
+
+  replayParts = validParts.map((part, index) => ({
+    ...part,
+    key: part.key || `replay-part-${part.part || index + 1}`,
+  }));
+  setReplaySummary(replayParts);
+  elements.replayModal.hidden = false;
+
+  const preferredKey =
+    options.preferredKey && replayParts.some((part) => part.key === options.preferredKey)
+      ? options.preferredKey
+      : replayParts[0].key;
+  setReplayPart(preferredKey, { autoPlay: options.autoPlay !== false });
+}
+
+function replayRecording() {
+  const parts = state.recordingParts
+    .filter((part) => part.audioBlob)
+    .sort((a, b) => a.part - b.part)
+    .map((part) => ({
+      key: `current-part-${part.part}`,
+      part: part.part,
+      audioBlob: part.audioBlob,
+      duration: part.duration,
+      durationMs: parseTimeLabelToMs(part.duration || "00:00"),
+      speakerLog: Array.isArray(part.speakerLog) ? part.speakerLog : [],
+    }));
+
+  if (!parts.length) {
+    const fallbackBlob = state.lastRecordingBlob || buildAudioBlob();
+    if (!fallbackBlob) {
+      alert("Nothing to replay yet.");
+      return;
+    }
+    parts.push({
+      key: "current-fallback",
+      part: 1,
+      audioBlob: fallbackBlob,
+      duration: elements.recTimer.textContent,
+      durationMs: parseTimeLabelToMs(elements.recTimer.textContent || "00:00"),
+      speakerLog: normalizeReplayLog(state.speakerLog),
+    });
+  }
+
+  openReplayWithParts(parts);
+}
+
+function closeReplayModal() {
+  elements.replayModal.hidden = true;
+  elements.replayAudioModal.pause();
+  elements.replayAudioModal.currentTime = 0;
+  elements.replayAudioModal.src = "";
+  elements.replayAudioModal.ontimeupdate = null;
+  elements.replayAudioModal.onseeked = null;
+  elements.replayAudioModal.onseeking = null;
+  releaseReplayAudioUrl();
+  replayParts = [];
+  replayActiveKey = null;
+  if (elements.replayClipList) {
+    elements.replayClipList.innerHTML = "";
+  }
+  if (elements.replaySummary) {
+    elements.replaySummary.textContent = "";
+  }
+  if (elements.timelineLog) {
+    elements.timelineLog.innerHTML = "";
+  }
+  if (elements.modalCurrentSpeaker) {
+    elements.modalCurrentSpeaker.textContent = "—";
+  }
+}
+
+async function saveCurrentSession() {
+  if (!state.lastRecordingBlob && state.speakerLog.length === 0) {
+    return null;
+  }
+  if (!state.currentSessionName.trim()) {
+    showAlertModal("Session Name Required", ["Please enter a session name."], "warning");
+    return null;
+  }
+  const sessionId = `session-${Date.now()}`;
+  const hasAudio = !!state.lastRecordingBlob;
+
+  const session = {
+    id: sessionId,
+    name: state.currentSessionName.trim(),
+    date: new Date().toLocaleDateString(),
+    time: new Date().toLocaleTimeString(),
+    speakerLog: [...state.speakerLog],
+    hasAudio: hasAudio,
+    duration: elements.recTimer.textContent,
+  };
+
+  // Save audio blob to IndexedDB if present
+  if (state.lastRecordingBlob) {
+    try {
+      await saveAudioToIndexedDB(sessionId, state.lastRecordingBlob);
+    } catch (err) {
+      console.error("Failed to save audio to IndexedDB:", err);
+    }
+  }
+
+  state.sessionHistory.unshift(session);
+  saveHistoryToStorage();
+  return session;
+}
+
+function saveHistoryToStorage() {
+  const historyMeta = state.sessionHistory.map(s => ({
+    id: s.id,
+    name: s.name,
+    date: s.date,
+    time: s.time,
+    duration: s.duration,
+    hasAudio: s.hasAudio,
+    speakerLog: s.speakerLog,
+  }));
+  localStorage.setItem("minutesHistory", JSON.stringify(historyMeta));
+}
+
+function loadHistoryFromStorage() {
+  const stored = localStorage.getItem("minutesHistory");
+  if (stored) {
+    const historyMeta = JSON.parse(stored);
+    state.sessionHistory = historyMeta.map(m => ({
+      ...m,
+      speakerLog: m.speakerLog || [],
+    }));
+  }
+}
+
+function startNewSession() {
+  if (state.recording) {
+    alert("Please stop recording first.");
+    return;
+  }
+
+  const hasData = state.lastRecordingBlob || state.speakerLog.length > 0;
+  if (hasData) {
+    const confirmed = confirm("Save current session and start a new one?");
+    if (!confirmed) return;
+    saveCurrentSession();
+  }
+
+  resetSessionState();
+  setStage(1);
+}
+
+function resetSessionState() {
+  state.currentSpeakerId = null;
+  state.recorder = null;
+  state.recording = false;
+  state.startTime = null;
+  state.lastRecordingBlob = null;
+  state.chunks = [];
+  state.speakerLog = [];
+  state.recordingParts = [];
+  state.nextPartNumber = 1;
+  state.currentPartNumber = null;
+  state.currentSessionName = "";
+
+  elements.recStatus.textContent = "Idle";
+  elements.recStatus.classList.remove("recording");
+  elements.recTimer.textContent = "00:00";
+  elements.currentSpeaker.textContent = "None";
+  elements.startBtn.disabled = false;
+  elements.stopBtn.disabled = true;
+  elements.replayBtn.disabled = true;
+  elements.exportBtn.disabled = true;
+  elements.sessionName.value = "";
+  elements.startBtn.textContent = "Record Part 1";
+  elements.csvStatus.textContent = "No CSV loaded";
+  elements.photosStatus.textContent = "No photos loaded";
+
+  state.people.forEach(p => {
+    p.placement = null;
+    p.absent = false;
+  });
+  state.tables = [];
+
+  renderCanvas();
+  renderPeopleList();
+  renderAbsentList();
+}
+
+function openHistoryModal() {
+  renderHistoryList();
+  elements.historyModal.hidden = false;
+}
+
+function closeHistoryModal() {
+  elements.historyModal.hidden = true;
+}
+
+function renderHistoryList() {
+  if (state.sessionHistory.length === 0) {
+    elements.historyList.innerHTML = '<p class="empty-state">No saved sessions yet.</p>';
+    return;
+  }
+
+  elements.historyList.innerHTML = state.sessionHistory.map(session => {
+    const hasAudio = session.hasAudio;
+    const speakerCount = session.speakerLog?.length || 0;
+    return `
+      <div class="history-item" data-id="${session.id}">
+        <div class="history-item-info">
+          <h3>${session.name}</h3>
+          <p>${session.date} • ${session.time} • ${session.duration || "No recording"} • ${speakerCount} speaker${speakerCount !== 1 ? 's' : ''}</p>
+        </div>
+        <div class="history-item-actions">
+          <div class="history-item-status">
+            ${hasAudio ? '<span class="has-audio" aria-label="Has audio"><i data-lucide="play"></i></span>' : '<span class="no-audio">No audio</span>'}
+          </div>
+          <button class="history-delete" data-id="${session.id}" title="Delete session" aria-label="Delete session">
+            <i data-lucide="trash-2"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  refreshIcons();
+
+  elements.historyList.querySelectorAll(".history-item").forEach(item => {
+    item.addEventListener("click", () => {
+      const sessionId = item.dataset.id;
+      playHistorySession(sessionId);
+    });
+  });
+
+  elements.historyList.querySelectorAll(".history-delete").forEach(button => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const sessionId = button.dataset.id;
+      deleteSession(sessionId);
+    });
+  });
+}
+
+function refreshIcons() {
+  if (window.lucide && typeof window.lucide.createIcons === "function") {
+    window.lucide.createIcons();
+  }
+}
+
+async function deleteSession(sessionId) {
+  const session = state.sessionHistory.find(s => s.id === sessionId);
+  if (!session) return;
+  const confirmed = confirm(`Delete "${session.name}"? This cannot be undone.`);
+  if (!confirmed) return;
+
+  if (session.hasAudio) {
+    try {
+      await deleteAudioFromIndexedDB(sessionId);
+    } catch (err) {
+      console.error("Failed to delete audio from IndexedDB:", err);
+    }
+  }
+
+  state.sessionHistory = state.sessionHistory.filter(s => s.id !== sessionId);
+  saveHistoryToStorage();
+  renderHistoryList();
+}
+
+async function playHistorySession(sessionId) {
+  const session = state.sessionHistory.find(s => s.id === sessionId);
+  if (!session) return;
+
+  if (!session.hasAudio) {
+    alert("No audio was recorded for this session.");
+    return;
+  }
+
+  // Load audio from IndexedDB
+  let audioBlob;
+  try {
+    audioBlob = await getAudioFromIndexedDB(sessionId);
+  } catch (err) {
+    console.error("Failed to load audio from IndexedDB:", err);
+    alert("Failed to load audio.");
+    return;
+  }
+
+  if (!audioBlob) {
+    alert("Audio not found in storage.");
+    return;
+  }
+
+  closeHistoryModal();
+
+  openReplayWithParts([
+    {
+      key: `history-${sessionId}-part-1`,
+      part: 1,
+      audioBlob,
+      duration: session.duration || "00:00",
+      durationMs: parseTimeLabelToMs(session.duration || "00:00"),
+      speakerLog: normalizeReplayLog(session.speakerLog),
+    },
+  ]);
+}
+
+function renderTimelineLog(logEntries = state.speakerLog) {
+  elements.timelineLog.innerHTML = "";
+  const sortedLog = normalizeReplayLog(logEntries);
+  if (!sortedLog.length) {
+    elements.timelineLog.innerHTML = '<p class="timeline-empty">No speaker log for this clip.</p>';
+    elements.modalCurrentSpeaker.textContent = "—";
+    return;
+  }
+
+  sortedLog.forEach((entry, index) => {
+    const row = document.createElement("div");
+    row.className = "timeline-entry";
+    row.dataset.index = index;
+    row.innerHTML = `<span>${entry.name}</span><span class="time">${entry.time}</span>`;
+    row.addEventListener("click", () => {
+      const seconds = parseTimeLabelToMs(entry.time) / 1000;
+      elements.replayAudioModal.currentTime = seconds;
+      updateModalSpeaker(sortedLog);
+      elements.replayAudioModal.play().catch(() => {});
+    });
+    elements.timelineLog.appendChild(row);
+  });
+}
+
+function updateModalSpeaker(logEntries = state.speakerLog) {
+  const currentTime = elements.replayAudioModal.currentTime * 1000;
+  const sortedLog = normalizeReplayLog(logEntries);
+  let activeSpeaker = "—";
+  let activeIndex = -1;
+
+  for (let i = sortedLog.length - 1; i >= 0; i--) {
+    const entry = sortedLog[i];
+    const entryMs = parseTimeLabelToMs(entry.time);
+    if (currentTime >= entryMs) {
+      activeSpeaker = entry.name;
+      activeIndex = i;
+      break;
+    }
+  }
+
+  elements.modalCurrentSpeaker.textContent = activeSpeaker;
+
+  const entries = elements.timelineLog.querySelectorAll(".timeline-entry");
+  const isPlaying = !elements.replayAudioModal.paused;
+
+  entries.forEach((el, i) => {
+    const wasActive = el.classList.contains("active");
+    const isNowActive = i === activeIndex;
+    el.classList.toggle("active", isNowActive);
+
+    if (!wasActive && isNowActive && isPlaying) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  });
+}
+
+function setupEvents() {
+  elements.addTableBtn.addEventListener("click", addTable);
+  elements.addCircleBtn.addEventListener("click", () =>
+    addTableWithShape("circle")
+  );
+  elements.addRectBtn.addEventListener("click", () =>
+    addTableWithShape("rect")
+  );
+  elements.clearTablesBtn.addEventListener("click", clearTables);
+  elements.confirmSetupBtn.addEventListener("click", () => {
+    const name = elements.sessionName.value.trim();
+    if (!name) {
+      showAlertModal("Session Name Required", ["Please enter a session name."], "warning");
+      return;
+    }
+    state.currentSessionName = name;
+    setStage(2);
+  });
+  elements.startBtn.addEventListener("click", startRecording);
+  elements.stopBtn.addEventListener("click", stopRecording);
+  elements.exportBtn.addEventListener("click", exportSession);
+  elements.replayBtn.addEventListener("click", replayRecording);
+  elements.closeModalBtn.addEventListener("click", closeReplayModal);
+  elements.addGuestBtn.addEventListener("click", handleAddGuest);
+  elements.guestNameInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleAddGuest();
+    }
+  });
+  elements.csvPickBtn.addEventListener("click", () => elements.csvInput.click());
+  elements.photosPickBtn.addEventListener("click", () =>
+    elements.photosInput.click()
+  );
+  elements.csvTemplateLink.addEventListener("click", (event) => {
+    event.preventDefault();
+    downloadCsvTemplate();
+  });
+  elements.csvInput.addEventListener("change", handleCsvUpload);
+  elements.photosInput.addEventListener("change", handlePhotoUpload);
+  elements.replayModal.addEventListener("click", (e) => {
+    if (e.target === elements.replayModal) {
+      closeReplayModal();
+    }
+  });
+  elements.newSessionBtn.addEventListener("click", startNewSession);
+  elements.historyBtn.addEventListener("click", openHistoryModal);
+  elements.closeHistoryBtn.addEventListener("click", closeHistoryModal);
+  elements.historyModal.addEventListener("click", (e) => {
+    if (e.target === elements.historyModal) {
+      closeHistoryModal();
+    }
+  });
+  elements.tourNextBtn?.addEventListener("click", tourNext);
+  elements.tourBackBtn?.addEventListener("click", tourBack);
+  elements.tourSkipBtn?.addEventListener("click", endTour);
+  const alertModal = document.getElementById("alertModal");
+  if (alertModal) {
+    const closeAlertBtn = document.getElementById("closeAlertBtn");
+    closeAlertBtn?.addEventListener("click", closeAlertModal);
+    alertModal.addEventListener("click", (e) => {
+      if (e.target === alertModal) {
+        closeAlertModal();
+      }
+    });
+  }
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      if (!elements.replayModal.hidden) closeReplayModal();
+      if (!elements.historyModal.hidden) closeHistoryModal();
+      closeAlertModal();
+      endTour();
+    }
+  });
+  window.addEventListener("resize", positionTour);
+}
+
+function handleCsvUpload(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const csvText = String(reader.result || "");
+    const { records, errors, warnings } = parseMemberCSV(csvText);
+    if (errors.length) {
+      showAlertModal("CSV Import Error", errors, "error");
+      return;
+    }
+    state.membersData = records;
+    elements.csvStatus.textContent = `${records.length} members loaded`;
+    applyRoster(records, { extraWarnings: warnings });
+  };
+  reader.onerror = () => {
+    showAlertModal("CSV Import Error", ["Failed to read CSV file."], "error");
+  };
+  reader.readAsText(file);
+  event.target.value = "";
+}
+
+function remapPeoplePhotosFromPhotoMap() {
+  const missing = [];
+  let mappedCount = 0;
+
+  state.people.forEach((person) => {
+    if (!person.photoFilename) return;
+    const mappedAvatar = state.photoMap.get(person.photoFilename);
+    if (mappedAvatar) {
+      person.avatar = mappedAvatar;
+      mappedCount += 1;
+    } else if (!person.isGuest) {
+      missing.push(`Missing image for "${person.name}": ${person.photoFilename}`);
+    }
+  });
+
+  renderPeopleList();
+  renderAbsentList();
+  renderCanvas();
+
+  if (state.stage === 2 && state.v2?.currentSessionId) {
+    persistCurrentSession("draft");
+  }
+
+  return { mappedCount, missing };
+}
+
+function updatePhotoUploadStatusFromRoster() {
+  if (!elements.photosStatus) return;
+  if (state.photoMap.size > 0) return;
+
+  const needsPhotoCount = state.people.filter(
+    (person) => !person.isGuest && person.photoFilename
+  ).length;
+
+  if (needsPhotoCount > 0) {
+    elements.photosStatus.textContent =
+      `Photos not loaded. Re-upload ${needsPhotoCount} image${needsPhotoCount === 1 ? "" : "s"} to restore avatars.`;
+  } else {
+    elements.photosStatus.textContent = "No photos loaded";
+  }
+}
+
+function handlePhotoUpload(event) {
+  const files = event.target.files;
+  if (!files || files.length === 0) return;
+  setPhotoMapFromFiles(files);
+  elements.photosStatus.textContent = `${files.length} photo${files.length === 1 ? "" : "s"} loaded`;
+
+  if (!state.membersData || state.membersData.length === 0) {
+    const hasRosterPhotoFilenames = state.people.some(
+      (person) => !person.isGuest && person.photoFilename
+    );
+
+    if (!hasRosterPhotoFilenames) {
+      showAlertModal(
+        "Photos Uploaded",
+        ["Photos loaded. Upload a CSV to map them to members."],
+        "warning"
+      );
+      event.target.value = "";
+      return;
+    }
+
+    const { mappedCount, missing } = remapPeoplePhotosFromPhotoMap();
+    if (missing.length > 0) {
+      showAlertModal(
+        "Photos Uploaded With Warnings",
+        [`Mapped ${mappedCount} member photo${mappedCount === 1 ? "" : "s"}.`, ...missing],
+        "warning"
+      );
+    } else {
+      showAlertModal(
+        "Photos Uploaded",
+        [`Mapped ${mappedCount} member photo${mappedCount === 1 ? "" : "s"}.`],
+        "success"
+      );
+    }
+    event.target.value = "";
+    return;
+  }
+  applyRoster(state.membersData);
+  event.target.value = "";
+}
+
+function handleAddGuest() {
+  const rawName = elements.guestNameInput.value;
+  const added = addGuestToState(rawName);
+  if (!added) {
+    showAlertModal("Guest Not Added", ["Guest already exists or name is empty."], "warning");
+    return;
+  }
+  elements.guestNameInput.value = "";
+  renderPeopleList();
+  renderAbsentList();
+  renderCanvas();
+}
+
+function showAlertModal(title, messages, tone = "info") {
+  const modal = document.getElementById("alertModal");
+  const titleEl = document.getElementById("alertTitle");
+  const listEl = document.getElementById("alertMessages");
+  const badge = document.getElementById("alertBadge");
+  if (!modal || !titleEl || !listEl || !badge) {
+    alert(messages.join("\n"));
+    return;
+  }
+  titleEl.textContent = title;
+  listEl.innerHTML = messages.map((msg) => `<li>${msg}</li>`).join("");
+  modal.dataset.tone = tone;
+  badge.textContent =
+    tone === "success"
+      ? "Success"
+      : tone === "warning"
+        ? "Warning"
+        : tone === "error"
+          ? "Error"
+          : "Info";
+  modal.hidden = false;
+}
+
+function closeAlertModal() {
+  const modal = document.getElementById("alertModal");
+  if (modal) modal.hidden = true;
+}
+
+function maybeStartTour() {
+  if (localStorage.getItem(TOUR_KEY) === "1") {
+    return;
+  }
+  if (!elements.tourOverlay) {
+    return;
+  }
+  state.tourIndex = 0;
+  elements.tourOverlay.hidden = false;
+  showTourStep(state.tourIndex);
+}
+
+function endTour() {
+  if (!elements.tourOverlay) {
+    return;
+  }
+  elements.tourOverlay.hidden = true;
+  localStorage.setItem(TOUR_KEY, "1");
+}
+
+function tourNext() {
+  state.tourIndex = (state.tourIndex ?? 0) + 1;
+  showTourStep(state.tourIndex);
+}
+
+function tourBack() {
+  state.tourIndex = Math.max(0, (state.tourIndex ?? 0) - 1);
+  showTourStep(state.tourIndex);
+}
+
+function showTourStep(index) {
+  if (!elements.tourOverlay || !elements.tourSpotlight || !elements.tourCard) {
+    return;
+  }
+  if (index >= tourSteps.length) {
+    endTour();
+    return;
+  }
+
+  let stepIndex = index;
+  let target = null;
+  while (stepIndex < tourSteps.length) {
+    const step = tourSteps[stepIndex];
+    const el = document.querySelector(step.selector);
+    if (el && el.getClientRects().length > 0) {
+      target = el;
+      break;
+    }
+    stepIndex += 1;
+  }
+  if (!target) {
+    endTour();
+    return;
+  }
+  state.tourIndex = stepIndex;
+  const step = tourSteps[stepIndex];
+
+  elements.tourTitle.textContent = step.title;
+  elements.tourText.textContent = step.text;
+  elements.tourStepCount.textContent = `Step ${stepIndex + 1} of ${tourSteps.length}`;
+  elements.tourBackBtn.disabled = stepIndex === 0;
+  elements.tourNextBtn.textContent =
+    stepIndex === tourSteps.length - 1 ? "Finish" : "Next";
+
+  positionTour(target);
+}
+
+function positionTour(target) {
+  if (!elements.tourOverlay || elements.tourOverlay.hidden) {
+    return;
+  }
+  const step = tourSteps[state.tourIndex ?? 0];
+  const el = target || (step && document.querySelector(step.selector));
+  if (!el) return;
+
+  const rect = el.getBoundingClientRect();
+  const padding = 10;
+  const spotlight = elements.tourSpotlight;
+  const left = Math.max(8, rect.left - padding);
+  const top = Math.max(8, rect.top - padding);
+  const width = Math.min(window.innerWidth - 16, rect.width + padding * 2);
+  const height = Math.min(window.innerHeight - 16, rect.height + padding * 2);
+  spotlight.style.left = `${left}px`;
+  spotlight.style.top = `${top}px`;
+  spotlight.style.width = `${width}px`;
+  spotlight.style.height = `${height}px`;
+
+  const card = elements.tourCard;
+  const cardWidth = card.offsetWidth || 280;
+  const cardHeight = card.offsetHeight || 140;
+
+  let cardTop = rect.bottom + 18;
+  let arrowDir = "up";
+  if (cardTop + cardHeight > window.innerHeight - 12) {
+    cardTop = rect.top - cardHeight - 18;
+    arrowDir = "down";
+  }
+  cardTop = Math.max(12, Math.min(cardTop, window.innerHeight - cardHeight - 12));
+
+  let cardLeft = rect.left;
+  cardLeft = Math.max(12, Math.min(cardLeft, window.innerWidth - cardWidth - 12));
+
+  card.style.top = `${cardTop}px`;
+  card.style.left = `${cardLeft}px`;
+
+  const arrow = elements.tourArrow;
+  arrow.style.display = "block";
+  arrow.style.top = arrowDir === "up" ? "-6px" : "auto";
+  arrow.style.bottom = arrowDir === "down" ? "-6px" : "auto";
+  arrow.style.left = `${Math.min(
+    cardWidth - 24,
+    Math.max(18, rect.left - cardLeft + rect.width / 2 - 6)
+  )}px`;
+}
+
+async function init() {
+  state.membersData = [];
+  state.people = [];
+  localStorage.removeItem("minutesMembersCsv");
+  clearGuestStorage();
+  updateDateTime();
+  setInterval(updateDateTime, 30000);
+  try {
+    await openDatabase();
+  } catch (err) {
+    console.error("Failed to open IndexedDB:", err);
+  }
+  loadHistoryFromStorage();
+  renderPeopleList();
+  renderAbsentList();
+  renderCanvas();
+  setStage(1);
+  setupEvents();
+  refreshIcons();
+  updatePartUi();
+  setTimeout(maybeStartTour, 200);
+}
+
+init();
+    </script>
+    <script>
+(() => {
+  const HISTORY_V2_KEY = "minutesHistoryV2";
+  const ACTIVE_SESSION_KEY = "minutesActiveSessionId";
+  const LEGACY_HISTORY_KEY = "minutesHistory";
+  const AUTOSAVE_INTERVAL_MS = 10000;
+
+  const ui = {
+    agendaPanel: document.getElementById("agendaPanel"),
+    agendaInput: document.getElementById("agendaInput"),
+    agendaAddBtn: document.getElementById("agendaAddBtn"),
+    agendaList: document.getElementById("agendaList"),
+    segmentBtn: document.getElementById("segmentBtn"),
+    fullscreenBtn: document.getElementById("fullscreenBtn"),
+    railToggleBtn: document.getElementById("railToggleBtn"),
+    fullscreenGate: document.getElementById("fullscreenGate"),
+    fullscreenGateBtn: document.getElementById("fullscreenGateBtn"),
+    conversionHint: document.getElementById("conversionHint"),
+    tagModal: document.getElementById("tagModal"),
+    tagModalPart: document.getElementById("tagModalPart"),
+    tagSegmentsList: document.getElementById("tagSegmentsList"),
+    tagSaveBtn: document.getElementById("tagSaveBtn"),
+    tagCloseBtn: document.getElementById("tagCloseBtn"),
+    tagLockHint: document.getElementById("tagLockHint"),
+    historyModal: document.getElementById("historyModal"),
+    historyList: document.getElementById("historyList"),
+    closeHistoryBtn: document.getElementById("closeHistoryBtn"),
+    historyNewBtn: document.getElementById("historyNewBtn"),
+  };
+
+  if (typeof state === "undefined" || typeof elements === "undefined") {
+    return;
+  }
+
+  const original = {
+    startRecording,
+    stopRecording,
+    setStage,
+    updatePartUi,
+    replayRecording,
+  };
+
+  if (!state.v2) {
+    state.v2 = {
+      schemaVersion: 2,
+      currentSessionId: null,
+      createdAt: null,
+      agendaItems: [],
+      segments: [],
+      activeSegmentId: null,
+      pendingTagging: false,
+      pendingTagPart: null,
+      history: [],
+      isDraft: true,
+      lastSavedAt: null,
+      saving: false,
+      ffmpeg: null,
+      ffmpegFetchFile: null,
+      ffmpegLoading: false,
+      convertingPart: null,
+      autoSaveTimer: null,
+      nextAgendaCooldownUntil: 0,
+      nextAgendaCooldownTimer: null,
+      partTransitioning: false,
+    };
+  }
+  if (typeof state.v2.nextAgendaCooldownUntil !== "number") {
+    state.v2.nextAgendaCooldownUntil = 0;
+  }
+  if (!("nextAgendaCooldownTimer" in state.v2)) {
+    state.v2.nextAgendaCooldownTimer = null;
+  }
+  if (typeof state.v2.partTransitioning !== "boolean") {
+    state.v2.partTransitioning = false;
+  }
+
+  function uid(prefix = "id") {
+    return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+  }
+
+  function nowIso() {
+    return new Date().toISOString();
+  }
+
+  function parseDurationToMs(label) {
+    const parts = String(label || "00:00").split(":").map((n) => Number(n || 0));
+    if (parts.length >= 2) {
+      return ((parts[0] || 0) * 60 + (parts[1] || 0)) * 1000;
+    }
+    return 0;
+  }
+
+  function msToSeconds(ms) {
+    return Number((Math.max(0, ms) / 1000).toFixed(3));
+  }
+
+  function exportStampLabel(date = new Date()) {
+    const yyyy = String(date.getFullYear());
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    const hh = String(date.getHours()).padStart(2, "0");
+    const min = String(date.getMinutes()).padStart(2, "0");
+    const ss = String(date.getSeconds()).padStart(2, "0");
+    return `${yyyy}${mm}${dd}-${hh}${min}${ss}`;
+  }
+
+  function safeSessionName() {
+    const name =
+      elements.sessionName?.value?.trim() ||
+      state.currentSessionName?.trim() ||
+      "Untitled Session";
+    state.currentSessionName = name;
+    if (elements.sessionName) {
+      elements.sessionName.value = name;
+    }
+    return name;
+  }
+
+  function stageIsRecording() {
+    return state.stage === 2 && state.recording;
+  }
+
+  function ensureV2Session() {
+    const name = safeSessionName();
+    if (!state.v2.currentSessionId) {
+      state.v2.currentSessionId = `session-${Date.now()}`;
+      state.v2.createdAt = nowIso();
+      state.v2.isDraft = true;
+    }
+    if (!Array.isArray(state.v2.agendaItems)) {
+      state.v2.agendaItems = [];
+    }
+    if (!Array.isArray(state.v2.segments)) {
+      state.v2.segments = [];
+    }
+    state.currentSessionName = name;
+    return state.v2.currentSessionId;
+  }
+
+  function sortSegmentsInPlace() {
+    state.v2.segments.sort((a, b) => {
+      if (a.part !== b.part) return a.part - b.part;
+      if (a.startMs !== b.startMs) return a.startMs - b.startMs;
+      return a.id.localeCompare(b.id);
+    });
+  }
+
+  function getActiveSegment() {
+    if (!state.v2.activeSegmentId) return null;
+    return state.v2.segments.find((seg) => seg.id === state.v2.activeSegmentId) || null;
+  }
+
+  function openSegment(part, startMs, source = "recording_split") {
+    const segment = {
+      id: uid("seg"),
+      sessionId: state.v2.currentSessionId,
+      part,
+      startMs: Math.max(0, Math.floor(startMs)),
+      endMs: null,
+      agendaItemId: null,
+      taggedAt: null,
+      source,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    };
+    state.v2.segments.push(segment);
+    state.v2.activeSegmentId = segment.id;
+    sortSegmentsInPlace();
+    return segment;
+  }
+
+  function closeActiveSegment(part, endMs) {
+    const active = getActiveSegment();
+    if (!active) return null;
+    if (active.part !== part) {
+      return null;
+    }
+    const minEnd = active.startMs + 500;
+    active.endMs = Math.max(minEnd, Math.floor(endMs));
+    active.updatedAt = nowIso();
+    state.v2.activeSegmentId = null;
+    return active;
+  }
+
+  function hasConversionPending() {
+    return false;
+  }
+
+  function markAllSegmentsAssignedDefault() {
+    state.v2.segments.forEach((seg) => {
+      if (seg.endMs != null && !seg.agendaItemId) {
+        seg.agendaItemId = "unassigned";
+      }
+    });
+  }
+
+  function unresolvedSegments() {
+    return state.v2.segments.filter((seg) => seg.endMs != null && !seg.agendaItemId);
+  }
+
+  function hasConversionFailures() {
+    return false;
+  }
+
+  function updateConversionHint(message = "") {
+    if (!ui.conversionHint) return;
+    ui.conversionHint.textContent = message;
+    ui.conversionHint.hidden = !message;
+  }
+
+  function clearNextAgendaCooldown() {
+    state.v2.nextAgendaCooldownUntil = 0;
+    if (state.v2.nextAgendaCooldownTimer) {
+      clearInterval(state.v2.nextAgendaCooldownTimer);
+      state.v2.nextAgendaCooldownTimer = null;
+    }
+  }
+
+  function nextAgendaCooldownRemainingMs() {
+    return Math.max(0, (state.v2.nextAgendaCooldownUntil || 0) - Date.now());
+  }
+
+  function startNextAgendaCooldown(durationMs = 3000) {
+    clearNextAgendaCooldown();
+    state.v2.nextAgendaCooldownUntil = Date.now() + Math.max(0, durationMs);
+    state.v2.nextAgendaCooldownTimer = setInterval(() => {
+      if (nextAgendaCooldownRemainingMs() <= 0) {
+        clearNextAgendaCooldown();
+      }
+      updateActionLocks();
+    }, 200);
+    updateActionLocks();
+  }
+
+  function updatePartIndicator() {
+    if (!elements.partIndicator || !elements.partNumberDisplay || !elements.partStateDisplay) {
+      return;
+    }
+    const partValue = Math.max(
+      1,
+      Number(state.recording ? state.currentPartNumber : state.nextPartNumber) || 1
+    );
+    const partState = state.v2.partTransitioning
+      ? "Switching"
+      : state.recording
+        ? "Recording"
+        : state.v2.pendingTagging
+          ? "Tag Required"
+          : "Ready";
+    elements.partNumberDisplay.textContent = `P${partValue}`;
+    elements.partStateDisplay.textContent = partState;
+    elements.partIndicator.classList.toggle("recording", state.recording);
+  }
+
+  function updateActionLocks() {
+    const fullscreenBlocked = state.stage === 2 && !document.fullscreenElement;
+    const transitioning = !!state.v2.partTransitioning;
+    const coolingDownMs = nextAgendaCooldownRemainingMs();
+    const setupMode = state.stage === 1;
+
+    if (ui.segmentBtn) {
+      ui.segmentBtn.disabled = !stageIsRecording() || transitioning || coolingDownMs > 0;
+      if (transitioning) {
+        ui.segmentBtn.textContent = "Switching...";
+      } else if (coolingDownMs > 0) {
+        ui.segmentBtn.textContent = `Next Agenda Item (${Math.ceil(coolingDownMs / 1000)})`;
+      } else {
+        ui.segmentBtn.textContent = "Next Agenda Item";
+      }
+    }
+    if (elements.startBtn) {
+      elements.startBtn.disabled =
+        state.recording ||
+        fullscreenBlocked ||
+        state.v2.pendingTagging ||
+        transitioning;
+    }
+    if (elements.stopBtn) {
+      elements.stopBtn.disabled = !state.recording || transitioning;
+    }
+    if (elements.replayBtn) {
+      elements.replayBtn.disabled =
+        state.recording ||
+        transitioning ||
+        state.v2.pendingTagging ||
+        state.recordingParts.length === 0;
+    }
+    if (elements.exportBtn) {
+      elements.exportBtn.disabled =
+        state.recording ||
+        transitioning ||
+        state.recordingParts.length === 0 ||
+        state.v2.pendingTagging ||
+        hasConversionPending() ||
+        hasConversionFailures() ||
+        unresolvedSegments().length > 0;
+    }
+    if (elements.historyBtn) {
+      elements.historyBtn.disabled = state.recording || transitioning;
+    }
+    if (elements.newSessionBtn) {
+      elements.newSessionBtn.disabled = state.recording || transitioning;
+    }
+    if (ui.fullscreenBtn) {
+      ui.fullscreenBtn.disabled = transitioning;
+    }
+    if (ui.railToggleBtn) {
+      ui.railToggleBtn.disabled = transitioning;
+    }
+    [elements.addTableBtn, elements.addCircleBtn, elements.addRectBtn, elements.clearTablesBtn].forEach((btn) => {
+      if (btn) {
+        btn.disabled = !setupMode;
+      }
+    });
+    updatePartIndicator();
+  }
+
+  function setFullscreenGate(show) {
+    if (!ui.fullscreenGate) return;
+    const shouldShow =
+      Boolean(show) &&
+      state.stage === 2 &&
+      !document.fullscreenElement;
+    ui.fullscreenGate.hidden = !shouldShow;
+    updateActionLocks();
+  }
+
+  async function requestStageFullscreen(options = {}) {
+    const { showGateOnFailure = true } = options;
+    if (document.fullscreenElement) {
+      setFullscreenGate(false);
+      return true;
+    }
+    if (!document.fullscreenEnabled) {
+      showAlertModal("Fullscreen Unsupported", ["This browser does not support fullscreen mode."], "error");
+      setFullscreenGate(showGateOnFailure);
+      return false;
+    }
+    try {
+      await document.documentElement.requestFullscreen();
+      setFullscreenGate(false);
+      return true;
+    } catch (error) {
+      setFullscreenGate(showGateOnFailure);
+      return false;
+    }
+  }
+
+  function updateStage2Panels() {
+    let needsIconRefresh = false;
+    if (ui.agendaPanel) {
+      ui.agendaPanel.hidden = true;
+    }
+    if (ui.railToggleBtn) {
+      const isCollapsed = document.body.classList.contains("rail-collapsed");
+      ui.railToggleBtn.setAttribute("aria-label", isCollapsed ? "Show People Panel" : "Hide People Panel");
+      ui.railToggleBtn.setAttribute("title", isCollapsed ? "Show People" : "Hide People");
+      ui.railToggleBtn.innerHTML = isCollapsed
+        ? '<i data-lucide="panel-right-open"></i>'
+        : '<i data-lucide="panel-right-close"></i>';
+      needsIconRefresh = true;
+    }
+    if (ui.fullscreenBtn) {
+      const isFullscreen = Boolean(document.fullscreenElement);
+      ui.fullscreenBtn.setAttribute("aria-label", isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen");
+      ui.fullscreenBtn.setAttribute("title", isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen");
+      ui.fullscreenBtn.innerHTML = isFullscreen
+        ? '<i data-lucide="minimize"></i>'
+        : '<i data-lucide="maximize"></i>';
+      needsIconRefresh = true;
+    }
+    if (needsIconRefresh) {
+      refreshIcons();
+    }
+  }
+
+  function toSerializablePeople() {
+    return state.people.map((p) => ({
+      id: p.id,
+      name: p.name,
+      alias: p.alias || "",
+      photoFilename: p.photoFilename || "",
+      avatar: p.avatar || svgAvatar(p.name),
+      isGuest: !!p.isGuest,
+      absent: !!p.absent,
+      placement: p.placement ? { ...p.placement } : null,
+    }));
+  }
+
+  function fromSerializablePeople(people) {
+    return (people || []).map((p) => ({
+      id: p.id || uid("p"),
+      name: p.name,
+      alias: p.alias || "",
+      photoFilename: p.photoFilename || "",
+      avatar: p.avatar || svgAvatar(p.name),
+      isGuest: !!p.isGuest,
+      absent: !!p.absent,
+      placement: p.placement ? { ...p.placement } : null,
+    }));
+  }
+
+  function sessionRecordFromState(status = "draft") {
+    ensureV2Session();
+    const name = safeSessionName();
+    const partsMeta = state.recordingParts.map((part) => ({
+      part: part.part,
+      duration: part.duration,
+      durationMs: part.durationMs || parseDurationToMs(part.duration),
+      mime: part.mime || "audio/webm",
+      status: part.status || "ready",
+      stoppedAt: part.stoppedAt,
+      speakerLog: part.speakerLog || [],
+    }));
+
+    return {
+      schemaVersion: 2,
+      id: state.v2.currentSessionId,
+      name,
+      status,
+      isDraft: status !== "completed",
+      createdAt: state.v2.createdAt || nowIso(),
+      updatedAt: nowIso(),
+      date: new Date().toLocaleDateString(),
+      time: new Date().toLocaleTimeString(),
+      nextPartNumber: state.nextPartNumber,
+      untaggedSegmentCount: unresolvedSegments().length,
+      agenda: state.v2.agendaItems.map((item) => ({ ...item })),
+      segments: state.v2.segments.map((seg) => ({ ...seg })),
+      parts: partsMeta,
+      tables: state.tables.map((t) => ({ ...t })),
+      people: toSerializablePeople(),
+    };
+  }
+
+  function upsertHistoryRecord(record) {
+    const list = Array.isArray(state.v2.history) ? state.v2.history : [];
+    const existingIndex = list.findIndex((s) => s.id === record.id);
+    if (existingIndex >= 0) {
+      list[existingIndex] = record;
+    } else {
+      list.unshift(record);
+    }
+    list.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    state.v2.history = list;
+    localStorage.setItem(HISTORY_V2_KEY, JSON.stringify(state.v2.history));
+  }
+
+  function persistCurrentSession(status = "draft") {
+    if (!state.v2.currentSessionId) return;
+    const record = sessionRecordFromState(status);
+    upsertHistoryRecord(record);
+    state.v2.lastSavedAt = nowIso();
+    if (record.isDraft) {
+      localStorage.setItem(ACTIVE_SESSION_KEY, record.id);
+    } else {
+      localStorage.removeItem(ACTIVE_SESSION_KEY);
+    }
+    if (!ui.historyModal.hidden) {
+      renderHistoryListV2();
+    }
+  }
+
+  function loadV2History() {
+    let records = [];
+    try {
+      const raw = localStorage.getItem(HISTORY_V2_KEY);
+      records = raw ? JSON.parse(raw) : [];
+    } catch (error) {
+      records = [];
+    }
+
+    if (!Array.isArray(records) || records.length === 0) {
+      try {
+        const legacyRaw = localStorage.getItem(LEGACY_HISTORY_KEY);
+        const legacy = legacyRaw ? JSON.parse(legacyRaw) : [];
+        if (Array.isArray(legacy) && legacy.length > 0) {
+          records = legacy.map((entry) => ({
+            schemaVersion: 2,
+            id: entry.id,
+            name: entry.name || "Legacy Session",
+            status: "completed",
+            isDraft: false,
+            createdAt: nowIso(),
+            updatedAt: nowIso(),
+            date: entry.date || new Date().toLocaleDateString(),
+            time: entry.time || new Date().toLocaleTimeString(),
+            nextPartNumber: 2,
+            untaggedSegmentCount: 0,
+            agenda: [],
+            segments: [],
+            parts: [
+              {
+                part: 1,
+                duration: entry.duration || "00:00",
+                durationMs: parseDurationToMs(entry.duration || "00:00"),
+                mime: "audio/webm",
+                status: "ready",
+                stoppedAt: nowIso(),
+                speakerLog: entry.speakerLog || [],
+              },
+            ],
+            tables: [],
+            people: [],
+          }));
+          localStorage.setItem("minutesHistoryV1_backup", JSON.stringify(legacy));
+          localStorage.setItem(HISTORY_V2_KEY, JSON.stringify(records));
+        }
+      } catch (error) {
+        records = [];
+      }
+    }
+
+    state.v2.history = Array.isArray(records) ? records : [];
+  }
+
+  async function saveAudioPartBlob(sessionId, partNumber, blob, mime = "audio/webm") {
+    if (!db) {
+      await openDatabase();
+    }
+    const key = `${sessionId}::part-${partNumber}`;
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction([AUDIO_STORE], "readwrite");
+      const store = tx.objectStore(AUDIO_STORE);
+      const req = store.put({
+        id: key,
+        blob,
+        mime,
+        sessionId,
+        part: partNumber,
+      });
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function getAudioPartBlob(sessionId, partNumber) {
+    if (!db) {
+      await openDatabase();
+    }
+    const key = `${sessionId}::part-${partNumber}`;
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction([AUDIO_STORE], "readonly");
+      const store = tx.objectStore(AUDIO_STORE);
+      const req = store.get(key);
+      req.onsuccess = () => {
+        const value = req.result;
+        resolve(value ? value.blob : null);
+      };
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function deleteAudioPartsForSession(sessionId) {
+    if (!db) {
+      await openDatabase();
+    }
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction([AUDIO_STORE], "readwrite");
+      const store = tx.objectStore(AUDIO_STORE);
+      const req = store.openCursor();
+      req.onerror = () => reject(req.error);
+      req.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (!cursor) {
+          resolve();
+          return;
+        }
+        const key = String(cursor.key || "");
+        if (key.startsWith(`${sessionId}::part-`) || key === sessionId) {
+          cursor.delete();
+        }
+        cursor.continue();
+      };
+    });
+  }
+
+  async function ensureFfmpegLoaded() {
+    if (state.v2.ffmpeg) {
+      return state.v2.ffmpeg;
+    }
+    if (state.v2.ffmpegLoading) {
+      while (state.v2.ffmpegLoading) {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+      if (state.v2.ffmpeg) return state.v2.ffmpeg;
+    }
+
+    state.v2.ffmpegLoading = true;
+    updateConversionHint("Loading MP3 converter...");
+    try {
+      const [{ FFmpeg }, { fetchFile }] = await Promise.all([
+        import("https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js"),
+        import("https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js"),
+      ]);
+      const ffmpeg = new FFmpeg();
+      await ffmpeg.load({
+        coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js",
+        wasmURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm",
+        workerURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.worker.js",
+      });
+      state.v2.ffmpeg = ffmpeg;
+      state.v2.ffmpegFetchFile = fetchFile;
+      updateConversionHint("MP3 converter ready");
+      return ffmpeg;
+    } finally {
+      state.v2.ffmpegLoading = false;
+    }
+  }
+
+  async function convertPartToMp3(part) {
+    if (!part || !part.audioBlob) {
+      throw new Error("Missing part audio blob");
+    }
+    if (String(part.mime || "").includes("mpeg")) {
+      part.status = "ready";
+      await saveAudioPartBlob(state.v2.currentSessionId, part.part, part.audioBlob, "audio/mpeg");
+      return part.audioBlob;
+    }
+
+    part.status = "pending_mp3";
+    updateActionLocks();
+    updateConversionHint(`Converting Part ${part.part} to MP3...`);
+
+    const ffmpeg = await ensureFfmpegLoaded();
+    const fetchFile = state.v2.ffmpegFetchFile;
+    const ext = extensionForMime(part.mime || "audio/webm");
+    const token = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+    const inName = `part-${part.part}-${token}.${ext}`;
+    const outName = `part-${part.part}-${token}.mp3`;
+
+    try {
+      await ffmpeg.writeFile(inName, await fetchFile(part.audioBlob));
+      await ffmpeg.exec([
+        "-i",
+        inName,
+        "-vn",
+        "-ar",
+        "44100",
+        "-ac",
+        "1",
+        "-b:a",
+        "128k",
+        outName,
+      ]);
+      const data = await ffmpeg.readFile(outName);
+      const mp3Blob = new Blob([data.buffer], { type: "audio/mpeg" });
+      part.audioBlob = mp3Blob;
+      part.mime = "audio/mpeg";
+      part.status = "ready";
+      await saveAudioPartBlob(state.v2.currentSessionId, part.part, mp3Blob, "audio/mpeg");
+      updateConversionHint(`Part ${part.part} ready`);
+      return mp3Blob;
+    } catch (error) {
+      part.status = "conversion_failed";
+      updateConversionHint(`Part ${part.part} conversion failed`);
+      throw error;
+    } finally {
+      try {
+        await ffmpeg.deleteFile(inName);
+      } catch (error) {
+        // ignore cleanup errors
+      }
+      try {
+        await ffmpeg.deleteFile(outName);
+      } catch (error) {
+        // ignore cleanup errors
+      }
+      updateActionLocks();
+    }
+  }
+
+  async function extractClipMp3(partBlob, startMs, endMs, token) {
+    const ffmpeg = await ensureFfmpegLoaded();
+    const fetchFile = state.v2.ffmpegFetchFile;
+    const clipIn = `clip-in-${token}.mp3`;
+    const clipOut = `clip-out-${token}.mp3`;
+    const startSec = Math.max(0, startMs / 1000);
+    const durationSec = Math.max(0.2, (endMs - startMs) / 1000);
+
+    try {
+      await ffmpeg.writeFile(clipIn, await fetchFile(partBlob));
+      await ffmpeg.exec([
+        "-i",
+        clipIn,
+        "-ss",
+        startSec.toFixed(3),
+        "-t",
+        durationSec.toFixed(3),
+        "-acodec",
+        "libmp3lame",
+        "-b:a",
+        "128k",
+        clipOut,
+      ]);
+      const data = await ffmpeg.readFile(clipOut);
+      return new Blob([data.buffer], { type: "audio/mpeg" });
+    } finally {
+      try {
+        await ffmpeg.deleteFile(clipIn);
+      } catch (error) {
+        // ignore cleanup errors
+      }
+      try {
+        await ffmpeg.deleteFile(clipOut);
+      } catch (error) {
+        // ignore cleanup errors
+      }
+    }
+  }
+
+  function renderAgendaList() {
+    if (!ui.agendaList) return;
+    const items = state.v2.agendaItems || [];
+    if (!items.length) {
+      ui.agendaList.innerHTML = '<p class="agenda-empty">No agenda items yet.</p>';
+      return;
+    }
+
+    ui.agendaList.innerHTML = items
+      .map(
+        (item, index) => `
+          <div class="agenda-item" data-id="${item.id}">
+            <span class="agenda-order">${index + 1}.</span>
+            <input class="agenda-title" type="text" value="${item.title.replace(/"/g, "&quot;")}" />
+            <div class="agenda-actions">
+              <button class="agenda-up" title="Move up">↑</button>
+              <button class="agenda-down" title="Move down">↓</button>
+              <button class="agenda-delete" title="Delete">✕</button>
+            </div>
+          </div>
+        `
+      )
+      .join("");
+
+    ui.agendaList.querySelectorAll(".agenda-item").forEach((row, index) => {
+      const id = row.dataset.id;
+      const titleInput = row.querySelector(".agenda-title");
+      const upBtn = row.querySelector(".agenda-up");
+      const downBtn = row.querySelector(".agenda-down");
+      const delBtn = row.querySelector(".agenda-delete");
+
+      titleInput?.addEventListener("change", () => {
+        const item = state.v2.agendaItems.find((a) => a.id === id);
+        if (!item) return;
+        item.title = titleInput.value.trim() || item.title;
+        item.updatedAt = nowIso();
+        persistCurrentSession("draft");
+        renderTagModal();
+      });
+
+      upBtn?.addEventListener("click", (event) => {
+        event.preventDefault();
+        if (index === 0) return;
+        const list = state.v2.agendaItems;
+        [list[index - 1], list[index]] = [list[index], list[index - 1]];
+        list.forEach((item2, pos) => {
+          item2.order = pos + 1;
+          item2.updatedAt = nowIso();
+        });
+        persistCurrentSession("draft");
+        renderAgendaList();
+        renderTagModal();
+      });
+
+      downBtn?.addEventListener("click", (event) => {
+        event.preventDefault();
+        const list = state.v2.agendaItems;
+        if (index >= list.length - 1) return;
+        [list[index], list[index + 1]] = [list[index + 1], list[index]];
+        list.forEach((item2, pos) => {
+          item2.order = pos + 1;
+          item2.updatedAt = nowIso();
+        });
+        persistCurrentSession("draft");
+        renderAgendaList();
+        renderTagModal();
+      });
+
+      delBtn?.addEventListener("click", (event) => {
+        event.preventDefault();
+        const item = state.v2.agendaItems.find((a) => a.id === id);
+        if (!item) return;
+        const ok = confirm(`Delete agenda item "${item.title}"?`);
+        if (!ok) return;
+        state.v2.agendaItems = state.v2.agendaItems.filter((a) => a.id !== id);
+        state.v2.agendaItems.forEach((item2, pos) => {
+          item2.order = pos + 1;
+          item2.updatedAt = nowIso();
+        });
+        state.v2.segments.forEach((seg) => {
+          if (seg.agendaItemId === id) {
+            seg.agendaItemId = "unassigned";
+            seg.taggedAt = nowIso();
+          }
+        });
+        persistCurrentSession("draft");
+        renderAgendaList();
+        renderTagModal();
+      });
+    });
+  }
+
+  function escapeHtml(value) {
+    return String(value || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
+  }
+
+  function agendaTitleForSegment(seg) {
+    if (seg.agendaTitle) {
+      return seg.agendaTitle;
+    }
+    if (!seg.agendaItemId || seg.agendaItemId === "unassigned") {
+      return "";
+    }
+    const item = state.v2.agendaItems.find((entry) => entry.id === seg.agendaItemId);
+    return item ? item.title : "";
+  }
+
+  function segmentSessionOffsetMs(partNumber) {
+    const targetPart = Number(partNumber) || 0;
+    if (!Array.isArray(state.recordingParts) || targetPart <= 1) {
+      return 0;
+    }
+    return state.recordingParts
+      .filter((part) => (Number(part.part) || 0) < targetPart)
+      .reduce((sum, part) => {
+        const durationMs = Number.isFinite(part.durationMs)
+          ? part.durationMs
+          : parseDurationToMs(part.duration || "00:00");
+        return sum + Math.max(0, Number(durationMs) || 0);
+      }, 0);
+  }
+
+  function getTagModalRows() {
+    if (!ui.tagSegmentsList) return [];
+    return [...ui.tagSegmentsList.querySelectorAll(".tag-segment-row")];
+  }
+
+  function isTagRowLabelled(row) {
+    const value = row.querySelector(".tag-agenda-title")?.value || "";
+    return value.trim().length > 0;
+  }
+
+  function syncTagModalLockState() {
+    if (!ui.tagModal || ui.tagModal.hidden) {
+      return true;
+    }
+    const rows = getTagModalRows();
+    let missing = 0;
+
+    rows.forEach((row) => {
+      const labelled = isTagRowLabelled(row);
+      row.classList.toggle("invalid", !labelled);
+      if (!labelled) {
+        missing += 1;
+      }
+    });
+
+    const canClose = missing === 0;
+    if (ui.tagCloseBtn) {
+      ui.tagCloseBtn.disabled = !canClose;
+    }
+    if (ui.tagSaveBtn) {
+      ui.tagSaveBtn.disabled = !canClose;
+    }
+    if (ui.tagLockHint) {
+      ui.tagLockHint.hidden = canClose;
+      ui.tagLockHint.textContent = canClose
+        ? ""
+        : `Label all segments to continue (${missing} remaining).`;
+    }
+    return canClose;
+  }
+
+  function renderTagModal() {
+    if (!ui.tagSegmentsList || !ui.tagModal) return;
+    if (!state.v2.pendingTagging) return;
+
+    const segments = state.v2.segments
+      .filter((seg) => seg.endMs != null)
+      .sort((a, b) => (a.part - b.part) || (a.startMs - b.startMs));
+
+    if (!segments.length) {
+      ui.tagSegmentsList.innerHTML = '<p class="empty-state">No segments to tag.</p>';
+      return;
+    }
+
+    ui.tagSegmentsList.innerHTML = segments
+      .map((seg, index) => {
+        const agendaText = agendaTitleForSegment(seg);
+        const offsetMs = segmentSessionOffsetMs(seg.part);
+        const sessionStartMs = offsetMs + Math.max(0, seg.startMs || 0);
+        const sessionEndMs = offsetMs + Math.max(0, seg.endMs || 0);
+        return `
+          <div class="tag-segment-row" data-id="${seg.id}">
+            <div class="tag-segment-head">
+              <strong>Segment ${index + 1} • Part ${seg.part}</strong>
+              <span>${formatDuration(sessionStartMs)} - ${formatDuration(sessionEndMs)}</span>
+            </div>
+            <div class="tag-segment-grid">
+              <label>Agenda Item
+                <input class="tag-agenda-title" type="text" placeholder="Required (type Unassigned if needed)" value="${escapeHtml(agendaText)}" />
+              </label>
+              <label>Start (sec, session)
+                <input class="tag-start" type="number" readonly value="${msToSeconds(sessionStartMs)}" />
+              </label>
+              <label>End (sec, session)
+                <input class="tag-end" type="number" readonly value="${msToSeconds(sessionEndMs)}" />
+              </label>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+
+    ui.tagSegmentsList.querySelectorAll(".tag-agenda-title").forEach((input) => {
+      input.addEventListener("input", () => {
+        syncTagModalLockState();
+      });
+    });
+    syncTagModalLockState();
+  }
+
+  function openTagModal() {
+    if (!ui.tagModal) return;
+    state.v2.pendingTagging = true;
+    state.v2.pendingTagPart = null;
+    if (ui.tagModalPart) {
+      ui.tagModalPart.textContent = "";
+    }
+    ui.tagModal.hidden = false;
+    renderTagModal();
+    syncTagModalLockState();
+    updateActionLocks();
+  }
+
+  function closeTagModal(options = {}) {
+    const { force = false, silent = false } = options;
+    if (!ui.tagModal) return;
+    if (!force && state.v2.pendingTagging && !syncTagModalLockState()) {
+      if (!silent) {
+        showAlertModal(
+          "Labels Required",
+          ["Label every segment before closing this modal. Type \"Unassigned\" when needed."],
+          "warning"
+        );
+      }
+      return;
+    }
+    ui.tagModal.hidden = true;
+    if (ui.tagLockHint) {
+      ui.tagLockHint.hidden = true;
+      ui.tagLockHint.textContent = "";
+    }
+    updateActionLocks();
+  }
+
+  function saveTagModal() {
+    if (!ui.tagSegmentsList) return;
+    const rows = [...ui.tagSegmentsList.querySelectorAll(".tag-segment-row")];
+    if (!syncTagModalLockState()) {
+      showAlertModal(
+        "Labels Required",
+        ["Label every segment before saving. Type \"Unassigned\" when needed."],
+        "warning"
+      );
+      return;
+    }
+    if (!rows.length) {
+      state.v2.pendingTagging = false;
+      closeTagModal();
+      persistCurrentSession("draft");
+      return;
+    }
+
+    for (const row of rows) {
+      const segId = row.dataset.id;
+      const segment = state.v2.segments.find((s) => s.id === segId);
+      if (!segment || segment.endMs == null) continue;
+      segment.updatedAt = nowIso();
+    }
+
+    const agendaMap = new Map();
+    const derivedAgendaItems = [];
+    let nextOrder = 1;
+
+    for (const row of rows) {
+      const segId = row.dataset.id;
+      const segment = state.v2.segments.find((s) => s.id === segId);
+      if (!segment || segment.endMs == null) continue;
+
+      const rawAgenda = (row.querySelector(".tag-agenda-title")?.value || "").trim();
+      if (!rawAgenda || rawAgenda.toLowerCase() === "unassigned") {
+        segment.agendaItemId = "unassigned";
+        segment.agendaTitle = "Unassigned";
+      } else {
+        const key = rawAgenda.toLowerCase();
+        if (!agendaMap.has(key)) {
+          const agendaItem = {
+            id: uid("agenda"),
+            title: rawAgenda,
+            order: nextOrder,
+            createdAt: nowIso(),
+            updatedAt: nowIso(),
+          };
+          agendaMap.set(key, agendaItem);
+          derivedAgendaItems.push(agendaItem);
+          nextOrder += 1;
+        }
+        const agendaItem = agendaMap.get(key);
+        segment.agendaItemId = agendaItem.id;
+        segment.agendaTitle = agendaItem.title;
+      }
+      segment.taggedAt = nowIso();
+      segment.updatedAt = nowIso();
+    }
+
+    state.v2.agendaItems = derivedAgendaItems;
+
+    markAllSegmentsAssignedDefault();
+    state.v2.pendingTagging = false;
+    sortSegmentsInPlace();
+    persistCurrentSession("draft");
+    closeTagModal();
+    updateActionLocks();
+  }
+
+  async function finalizeCurrentPart({ openTagAfter = false, fromFullscreenExit = false } = {}) {
+    if (!state.recording) {
+      return null;
+    }
+
+    await original.stopRecording();
+    const latestPart = state.recordingParts[state.recordingParts.length - 1];
+    if (!latestPart) {
+      updateActionLocks();
+      return null;
+    }
+
+    latestPart.durationMs = parseDurationToMs(latestPart.duration);
+    latestPart.status = "ready";
+    latestPart.mime = latestPart.mime || "audio/webm";
+    closeActiveSegment(latestPart.part, latestPart.durationMs);
+
+    ensureV2Session();
+    try {
+      await saveAudioPartBlob(
+        state.v2.currentSessionId,
+        latestPart.part,
+        latestPart.audioBlob,
+        latestPart.mime
+      );
+    } catch (error) {
+      showAlertModal("Audio Save Failed", ["Could not persist this segment locally."], "error");
+    }
+
+    persistCurrentSession("draft");
+
+    if (openTagAfter) {
+      openTagModal();
+    }
+
+    if (fromFullscreenExit) {
+      showAlertModal(
+        "Recording Stopped",
+        ["Fullscreen was exited. Recording was stopped to enforce fullscreen mode."],
+        "warning"
+      );
+    }
+
+    updateActionLocks();
+    return latestPart;
+  }
+
+  async function customStopRecording(fromFullscreenExit = false) {
+    clearNextAgendaCooldown();
+    await finalizeCurrentPart({ openTagAfter: true, fromFullscreenExit });
+  }
+
+  async function customStartRecording(options = {}) {
+    const { skipNextAgendaCooldown = false } = options;
+    if (state.stage !== 2) return;
+    if (state.v2.partTransitioning) return;
+    if (state.v2.pendingTagging) {
+      openTagModal();
+      showAlertModal("Tag Segments First", ["Complete segment tagging before continuing recording."], "warning");
+      return;
+    }
+
+    const fullscreenOk = await requestStageFullscreen();
+    if (!fullscreenOk) {
+      showAlertModal("Fullscreen Required", ["Recording can only start in fullscreen mode."], "warning");
+      return;
+    }
+
+    ensureV2Session();
+    await original.startRecording();
+
+    if (state.recording && state.currentPartNumber) {
+      openSegment(state.currentPartNumber, 0, "agenda_step");
+      persistCurrentSession("draft");
+      if (!skipNextAgendaCooldown) {
+        startNextAgendaCooldown(3000);
+      }
+    }
+
+    updateActionLocks();
+  }
+
+  async function goToNextAgendaItem() {
+    if (!state.recording) {
+      showAlertModal("Not Recording", ["Start recording first."], "warning");
+      return;
+    }
+    if (state.v2.partTransitioning || nextAgendaCooldownRemainingMs() > 0) {
+      return;
+    }
+    state.v2.partTransitioning = true;
+    updateActionLocks();
+    try {
+      await finalizeCurrentPart({ openTagAfter: false, fromFullscreenExit: false });
+      await customStartRecording({ skipNextAgendaCooldown: false });
+    } finally {
+      state.v2.partTransitioning = false;
+      updateActionLocks();
+    }
+  }
+
+  async function ensurePartBlob(part) {
+    if (part.audioBlob) return part.audioBlob;
+    const blob = await getAudioPartBlob(state.v2.currentSessionId, part.part);
+    if (blob) {
+      part.audioBlob = blob;
+      return blob;
+    }
+    return null;
+  }
+
+  async function buildReplayPartsFromRecordParts(parts, sessionId) {
+    const sorted = (Array.isArray(parts) ? [...parts] : []).sort((a, b) => (a.part || 0) - (b.part || 0));
+    const replayParts = [];
+
+    for (const part of sorted) {
+      let blob = part.audioBlob || null;
+      if (!blob && sessionId) {
+        // eslint-disable-next-line no-await-in-loop
+        blob = await getAudioPartBlob(sessionId, part.part);
+      }
+      if (!blob) continue;
+
+      replayParts.push({
+        key: `session-${sessionId || "current"}-part-${part.part}`,
+        part: part.part,
+        audioBlob: blob,
+        duration: part.duration || formatDuration(part.durationMs || 0),
+        durationMs: part.durationMs || parseDurationToMs(part.duration || "00:00"),
+        speakerLog: Array.isArray(part.speakerLog) ? part.speakerLog : [],
+      });
+    }
+
+    return replayParts;
+  }
+
+  async function customReplayCurrentSession() {
+    if (!state.recordingParts.length) {
+      showAlertModal("No Audio", ["Record at least one clip before replay."], "warning");
+      return;
+    }
+
+    const replayParts = await buildReplayPartsFromRecordParts(
+      state.recordingParts,
+      state.v2.currentSessionId
+    );
+
+    if (!replayParts.length) {
+      showAlertModal("Missing Audio", ["Could not load replay clips from local storage."], "error");
+      return;
+    }
+
+    openReplayWithParts(replayParts);
+  }
+
+  function agendaById(id) {
+    if (id === "unassigned") {
+      return { id: "unassigned", title: "Unassigned", order: 999 };
+    }
+    return state.v2.agendaItems.find((a) => a.id === id) || { id: "unassigned", title: "Unassigned", order: 999 };
+  }
+
+  function agendaNameParts(agendaItem) {
+    const isUnassigned = agendaItem.id === "unassigned";
+    const rawSlug = isUnassigned
+      ? "unassigned"
+      : sanitizeFilename(agendaItem.title || "unassigned");
+    const shortSlug = rawSlug.slice(0, 10).replace(/-+$/g, "") || "unassigned";
+    return {
+      orderLabel: isUnassigned ? "00" : String(agendaItem.order || 99).padStart(2, "0"),
+      slug: shortSlug,
+    };
+  }
+
+  function buildSegmentSpeakerTimeline(segment, part) {
+    const partDurationMs = Number.isFinite(part.durationMs)
+      ? part.durationMs
+      : parseDurationToMs(part.duration || "00:00");
+    const startMs = Math.max(0, Number(segment.startMs) || 0);
+    const endRaw = Number(segment.endMs);
+    const safeEndMs = Number.isFinite(endRaw)
+      ? Math.max(startMs, Math.min(endRaw, Math.max(0, partDurationMs)))
+      : Math.max(startMs, Math.max(0, partDurationMs));
+
+    const orderedLog = normalizeReplayLog(part.speakerLog).map((entry) => ({
+      ...entry,
+      partMs: parseTimeLabelToMs(entry.time),
+    }));
+    const timeline = orderedLog.filter((entry) => entry.partMs >= startMs && entry.partMs <= safeEndMs);
+
+    if (!timeline.length || timeline[0].partMs > startMs) {
+      const carryOver = [...orderedLog].reverse().find((entry) => entry.partMs < startMs);
+      if (carryOver) {
+        timeline.unshift({
+          ...carryOver,
+          partMs: startMs,
+          carriedOver: true,
+        });
+      }
+    }
+
+    const partOffsetMs = segmentSessionOffsetMs(segment.part);
+    return timeline.map((entry) => {
+      const entryPartMs = Math.max(startMs, entry.partMs);
+      const segmentMs = Math.max(0, entryPartMs - startMs);
+      const sessionMs = partOffsetMs + entryPartMs;
+      return {
+        name: entry.name || "Unknown",
+        alias: entry.alias || "",
+        segmentTimestamp: formatDuration(segmentMs),
+        segmentTimestampMs: segmentMs,
+        partTimestamp: formatDuration(entryPartMs),
+        partTimestampMs: entryPartMs,
+        sessionTimestamp: formatDuration(sessionMs),
+        sessionTimestampMs: sessionMs,
+        carriedOver: !!entry.carriedOver,
+      };
+    });
+  }
+
+  async function customExportSession() {
+    if (state.recording) {
+      showAlertModal("Stop Recording", ["Please stop recording before export."], "warning");
+      return;
+    }
+    if (!state.recordingParts.length) {
+      showAlertModal("No Audio", ["No recording parts available to export."], "warning");
+      return;
+    }
+    if (state.v2.pendingTagging) {
+      openTagModal();
+      showAlertModal("Tag Segments", ["Complete segment tagging before export."], "warning");
+      return;
+    }
+    if (unresolvedSegments().length > 0) {
+      openTagModal();
+      showAlertModal("Unresolved Segments", ["All segments must be tagged or marked unassigned."], "warning");
+      return;
+    }
+
+    ensureV2Session();
+    persistCurrentSession("draft");
+    if (!window.JSZip) {
+      showAlertModal("ZIP Unavailable", ["ZIP export library failed to load. Refresh and try again."], "error");
+      return;
+    }
+
+    const sessionLabel = safeSessionName();
+    const base = sanitizeFilename(sessionLabel);
+    const stampLabel = exportStampLabel();
+    const exportPrefix = `minutes-${base}-${stampLabel}`;
+    const sortedSegments = state.v2.segments
+      .filter((seg) => seg.endMs != null)
+      .sort((a, b) => (a.part - b.part) || (a.startMs - b.startMs));
+
+    if (!sortedSegments.length) {
+      showAlertModal("No Segments", ["No completed segments found to export."], "warning");
+      return;
+    }
+
+    updateConversionHint("Exporting segmented files...");
+    elements.exportBtn.disabled = true;
+    try {
+      const zip = new window.JSZip();
+      const files = [];
+      const agendaOutputs = new Map();
+
+      for (let index = 0; index < sortedSegments.length; index += 1) {
+        const segment = sortedSegments[index];
+        const part = state.recordingParts.find((p) => p.part === segment.part);
+        if (!part) {
+          showAlertModal("Missing Part", [`Recording part ${segment.part} was not found.`], "error");
+          updateConversionHint("");
+          return;
+        }
+        const partBlob = await ensurePartBlob(part);
+        if (!partBlob) {
+          showAlertModal("Missing Audio", [`Could not load audio for part ${segment.part}.`], "error");
+          updateConversionHint("");
+          return;
+        }
+
+        const agendaItem = agendaById(segment.agendaItemId || "unassigned");
+        const agendaName = agendaNameParts(agendaItem);
+        const clipIndex = String(index + 1).padStart(3, "0");
+        const partLabel = String(segment.part).padStart(2, "0");
+        const clipName = `${exportPrefix}-clip-${clipIndex}-p${partLabel}-agenda-${agendaName.orderLabel}-${agendaName.slug}.webm`;
+        zip.file(clipName, partBlob);
+        const speakerTimeline = buildSegmentSpeakerTimeline(segment, part);
+        const speakers = [...new Set(speakerTimeline.map((entry) => entry.name).filter(Boolean))];
+
+        const clipRef = {
+          segmentId: segment.id,
+          part: segment.part,
+          startMs: segment.startMs,
+          endMs: segment.endMs,
+          durationMs: Math.max(0, (Number(segment.endMs) || 0) - (Number(segment.startMs) || 0)),
+          agendaItemId: agendaItem.id,
+          agendaTitle: agendaItem.title,
+          speakers,
+          speakerTimeline,
+          file: clipName,
+        };
+        files.push(clipRef);
+
+        const bucketKey = agendaItem.id;
+        if (!agendaOutputs.has(bucketKey)) {
+          agendaOutputs.set(bucketKey, {
+            agendaItemId: agendaItem.id,
+            agendaTitle: agendaItem.title,
+            order: agendaItem.order,
+            clips: [],
+          });
+        }
+        agendaOutputs.get(bucketKey).clips.push(clipRef);
+      }
+
+      const manifest = {
+        schemaVersion: 2,
+        sessionId: state.v2.currentSessionId,
+        sessionName: sessionLabel,
+        exportedAt: nowIso(),
+        totalParts: state.recordingParts.length,
+        totalSegments: sortedSegments.length,
+        agenda: state.v2.agendaItems,
+        segments: sortedSegments,
+        files,
+      };
+
+      zip.file(`${exportPrefix}-manifest.json`, JSON.stringify(manifest, null, 2));
+
+      [...agendaOutputs.values()]
+        .sort((a, b) => (a.order || 999) - (b.order || 999))
+        .forEach((agendaEntry) => {
+          const agendaName = agendaNameParts({
+            id: agendaEntry.agendaItemId,
+            title: agendaEntry.agendaTitle,
+            order: agendaEntry.order,
+          });
+          const filename = `${exportPrefix}-agenda-${agendaName.orderLabel}-${agendaName.slug}.json`;
+          zip.file(filename, JSON.stringify(agendaEntry, null, 2));
+        });
+
+      const fullSession = {
+        schemaVersion: 2,
+        sessionId: state.v2.currentSessionId,
+        sessionName: sessionLabel,
+        exportedAt: nowIso(),
+        agenda: state.v2.agendaItems,
+        segments: sortedSegments,
+        parts: state.recordingParts.map((part) => ({
+          part: part.part,
+          duration: part.duration,
+          durationMs: part.durationMs || parseDurationToMs(part.duration),
+          speakerLog: part.speakerLog || [],
+        })),
+      };
+
+      zip.file(`${exportPrefix}-full.json`, JSON.stringify(fullSession, null, 2));
+
+      updateConversionHint("Building ZIP...");
+      const zipBlob = await zip.generateAsync({
+        type: "blob",
+        compression: "DEFLATE",
+        compressionOptions: { level: 6 },
+      });
+      triggerDownload(zipBlob, `${exportPrefix}.zip`);
+
+      state.v2.isDraft = false;
+      persistCurrentSession("completed");
+      updateConversionHint("Export complete");
+      showAlertModal("Export Complete", ["Generated one ZIP with manifest, agenda JSON files, and segmented WebM clips."], "success");
+    } catch (error) {
+      console.error(error);
+      updateConversionHint("");
+      showAlertModal("Export Failed", [error.message || "Could not build ZIP export."], "error");
+    } finally {
+      updateActionLocks();
+    }
+  }
+
+  async function loadSessionRecord(record) {
+    if (!record) return;
+
+    resetSessionState();
+    clearNextAgendaCooldown();
+    state.v2.partTransitioning = false;
+
+    state.v2.currentSessionId = record.id;
+    state.v2.createdAt = record.createdAt || nowIso();
+    state.v2.agendaItems = Array.isArray(record.agenda) ? record.agenda.map((a) => ({ ...a })) : [];
+    state.v2.segments = Array.isArray(record.segments) ? record.segments.map((s) => ({ ...s })) : [];
+    state.v2.activeSegmentId = null;
+    state.v2.pendingTagging = (record.untaggedSegmentCount || 0) > 0;
+    state.v2.pendingTagPart = null;
+    state.v2.isDraft = !!record.isDraft;
+
+    state.currentSessionName = record.name || "Untitled Session";
+    if (elements.sessionName) {
+      elements.sessionName.value = state.currentSessionName;
+    }
+
+    state.tables = Array.isArray(record.tables) ? record.tables.map((t) => ({ ...t })) : [];
+    state.people = fromSerializablePeople(record.people);
+    updatePhotoUploadStatusFromRoster();
+
+    state.recordingParts = Array.isArray(record.parts)
+      ? record.parts.map((p) => ({
+          part: p.part,
+          audioBlob: null,
+          mime: p.mime || "audio/webm",
+          duration: p.duration || formatDuration(p.durationMs || 0),
+          durationMs: p.durationMs || parseDurationToMs(p.duration || "00:00"),
+          speakerLog: p.speakerLog || [],
+          stoppedAt: p.stoppedAt || nowIso(),
+          status: p.status || "ready",
+        }))
+      : [];
+
+    for (const part of state.recordingParts) {
+      // eslint-disable-next-line no-await-in-loop
+      const blob = await getAudioPartBlob(record.id, part.part);
+      if (blob) {
+        part.audioBlob = blob;
+      }
+    }
+
+    state.nextPartNumber = record.nextPartNumber || (state.recordingParts.length + 1);
+    state.lastRecordingBlob = state.recordingParts.length
+      ? state.recordingParts[state.recordingParts.length - 1].audioBlob
+      : null;
+    state.speakerLog = state.recordingParts.length
+      ? [...(state.recordingParts[state.recordingParts.length - 1].speakerLog || [])].reverse()
+      : [];
+
+    renderPeopleList();
+    renderAbsentList();
+    renderCanvas();
+    renderAgendaList();
+
+    setStage(2);
+    updatePartUi();
+    updateActionLocks();
+  }
+
+  async function continueSessionById(sessionId) {
+    const record = state.v2.history.find((item) => item.id === sessionId);
+    if (!record) return;
+    await loadSessionRecord(record);
+    ui.historyModal.hidden = true;
+    persistCurrentSession(record.isDraft ? "draft" : "completed");
+  }
+
+  async function replaySessionById(sessionId) {
+    const record = state.v2.history.find((item) => item.id === sessionId);
+    if (!record || !Array.isArray(record.parts) || !record.parts.length) {
+      showAlertModal("No Audio", ["No audio parts found for this session."], "warning");
+      return;
+    }
+
+    const replayParts = await buildReplayPartsFromRecordParts(record.parts, record.id);
+    if (!replayParts.length) {
+      showAlertModal("Missing Audio", ["Could not load session audio from local storage."], "error");
+      return;
+    }
+
+    ui.historyModal.hidden = true;
+    openReplayWithParts(replayParts);
+  }
+
+  async function deleteSessionById(sessionId) {
+    const record = state.v2.history.find((item) => item.id === sessionId);
+    if (!record) return;
+    const ok = confirm(`Delete "${record.name}"? This cannot be undone.`);
+    if (!ok) return;
+    await deleteAudioPartsForSession(sessionId);
+    state.v2.history = state.v2.history.filter((item) => item.id !== sessionId);
+    localStorage.setItem(HISTORY_V2_KEY, JSON.stringify(state.v2.history));
+    if (localStorage.getItem(ACTIVE_SESSION_KEY) === sessionId) {
+      localStorage.removeItem(ACTIVE_SESSION_KEY);
+    }
+    renderHistoryListV2();
+  }
+
+  function renderHistoryListV2() {
+    if (!ui.historyList) return;
+    const records = state.v2.history || [];
+    if (!records.length) {
+      ui.historyList.innerHTML = '<p class="empty-state">No saved sessions yet.</p>';
+      return;
+    }
+
+    ui.historyList.innerHTML = records
+      .map((session) => {
+        const partCount = session.parts?.length || 0;
+        const draftBadge = session.isDraft ? '<span class="history-pill">Draft</span>' : '<span class="history-pill done">Done</span>';
+        return `
+          <div class="history-item" data-id="${session.id}">
+            <div class="history-item-info">
+              <h3>${session.name}</h3>
+              <p>${session.date || ""} • ${session.time || ""} • ${partCount} part${partCount === 1 ? "" : "s"}</p>
+            </div>
+            <div class="history-item-actions v2-actions">
+              ${draftBadge}
+              <button class="ghost history-continue" data-id="${session.id}">Continue</button>
+              <button class="ghost history-replay" data-id="${session.id}">Replay</button>
+              <button class="history-delete" data-id="${session.id}"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+
+    refreshIcons();
+
+    ui.historyList.querySelectorAll(".history-continue").forEach((btn) => {
+      btn.addEventListener("click", async (event) => {
+        event.stopPropagation();
+        await continueSessionById(btn.dataset.id);
+      });
+    });
+
+    ui.historyList.querySelectorAll(".history-replay").forEach((btn) => {
+      btn.addEventListener("click", async (event) => {
+        event.stopPropagation();
+        await replaySessionById(btn.dataset.id);
+      });
+    });
+
+    ui.historyList.querySelectorAll(".history-delete").forEach((btn) => {
+      btn.addEventListener("click", async (event) => {
+        event.stopPropagation();
+        await deleteSessionById(btn.dataset.id);
+      });
+    });
+  }
+
+  function openHistoryModalV2() {
+    renderHistoryListV2();
+    ui.historyModal.hidden = false;
+  }
+
+  function startNewSessionV2() {
+    if (state.recording) {
+      showAlertModal("End Recording First", ["Stop recording before ending this session."], "warning");
+      return;
+    }
+
+    const hasWork =
+      state.recordingParts.length > 0 ||
+      state.v2.segments.length > 0 ||
+      state.v2.agendaItems.length > 0 ||
+      !!state.currentSessionName;
+
+    if (hasWork) {
+      const save = confirm("Save current session before ending it?");
+      if (save) {
+        persistCurrentSession("completed");
+      }
+    }
+
+    state.v2.currentSessionId = null;
+    state.v2.createdAt = null;
+    state.v2.agendaItems = [];
+    state.v2.segments = [];
+    state.v2.activeSegmentId = null;
+    state.v2.pendingTagging = false;
+    state.v2.pendingTagPart = null;
+    state.v2.isDraft = true;
+    state.v2.partTransitioning = false;
+    clearNextAgendaCooldown();
+    localStorage.removeItem(ACTIVE_SESSION_KEY);
+
+    resetSessionState();
+    renderAgendaList();
+    closeTagModal();
+    setStage(1);
+    updateActionLocks();
+  }
+
+  function interceptClick(element, handler) {
+    if (!element) return;
+    element.addEventListener(
+      "click",
+      async (event) => {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        try {
+          await handler(event);
+        } catch (error) {
+          console.error(error);
+          showAlertModal("Action Failed", [error.message || "Unexpected error"], "error");
+        }
+      },
+      true
+    );
+  }
+
+  setStage = function patchedSetStage(stage) {
+    original.setStage(stage);
+    updateStage2Panels();
+    if (stage === 2) {
+      ensureV2Session();
+      state.v2.partTransitioning = false;
+      clearNextAgendaCooldown();
+      document.body.classList.add("rail-collapsed");
+      if (elements.guestAdd) {
+        elements.guestAdd.hidden = false;
+      }
+      renderPeopleList();
+      updateStage2Panels();
+      requestStageFullscreen({ showGateOnFailure: false });
+      setFullscreenGate(false);
+    } else {
+      setFullscreenGate(false);
+      state.v2.partTransitioning = false;
+      clearNextAgendaCooldown();
+      document.body.classList.remove("rail-collapsed");
+      renderPeopleList();
+      updateStage2Panels();
+    }
+    updateActionLocks();
+  };
+
+  updatePartUi = function patchedUpdatePartUi() {
+    original.updatePartUi();
+    if (elements.startBtn) {
+      elements.startBtn.textContent = state.recording ? "Recording..." : "Start Recording";
+    }
+    if (elements.stopBtn) {
+      elements.stopBtn.textContent = "End Recording";
+    }
+    updatePartIndicator();
+    updateStage2Panels();
+    updateActionLocks();
+  };
+
+  interceptClick(elements.startBtn, customStartRecording);
+  interceptClick(elements.stopBtn, async () => customStopRecording(false));
+  interceptClick(elements.exportBtn, customExportSession);
+  interceptClick(elements.replayBtn, customReplayCurrentSession);
+  interceptClick(elements.historyBtn, openHistoryModalV2);
+  interceptClick(elements.newSessionBtn, startNewSessionV2);
+
+  if (ui.segmentBtn) {
+    ui.segmentBtn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      await goToNextAgendaItem();
+      updateActionLocks();
+    });
+  }
+
+  if (ui.fullscreenBtn) {
+    ui.fullscreenBtn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      if (document.fullscreenElement) {
+        await document.exitFullscreen().catch(() => {});
+      } else {
+        await requestStageFullscreen();
+      }
+      updateStage2Panels();
+      updateActionLocks();
+    });
+  }
+
+  if (ui.railToggleBtn) {
+    ui.railToggleBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      document.body.classList.toggle("rail-collapsed");
+      updateStage2Panels();
+    });
+  }
+
+  if (ui.fullscreenGateBtn) {
+    ui.fullscreenGateBtn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      await requestStageFullscreen();
+      updateActionLocks();
+    });
+  }
+
+  if (ui.agendaAddBtn && ui.agendaInput) {
+    const addAgenda = () => {
+      const title = ui.agendaInput.value.trim();
+      if (!title) return;
+      ensureV2Session();
+      state.v2.agendaItems.push({
+        id: uid("agenda"),
+        title,
+        order: state.v2.agendaItems.length + 1,
+        createdAt: nowIso(),
+        updatedAt: nowIso(),
+      });
+      ui.agendaInput.value = "";
+      persistCurrentSession("draft");
+      renderAgendaList();
+      renderTagModal();
+    };
+    ui.agendaAddBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      addAgenda();
+    });
+    ui.agendaInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        addAgenda();
+      }
+    });
+  }
+
+  if (ui.tagSaveBtn) {
+    ui.tagSaveBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      saveTagModal();
+    });
+  }
+
+  if (ui.tagCloseBtn) {
+    ui.tagCloseBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      closeTagModal();
+    });
+  }
+
+  if (ui.tagModal) {
+    ui.tagModal.addEventListener("click", (event) => {
+      if (event.target === ui.tagModal) {
+        closeTagModal();
+      }
+    });
+  }
+
+  if (ui.closeHistoryBtn) {
+    ui.closeHistoryBtn.addEventListener("click", () => {
+      ui.historyModal.hidden = true;
+    });
+  }
+
+  if (ui.historyNewBtn) {
+    ui.historyNewBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      ui.historyModal.hidden = true;
+      startNewSessionV2();
+    });
+  }
+
+  if (ui.historyModal) {
+    ui.historyModal.addEventListener("click", (event) => {
+      if (event.target === ui.historyModal) {
+        ui.historyModal.hidden = true;
+      }
+    });
+  }
+
+  document.addEventListener("fullscreenchange", async () => {
+    updateStage2Panels();
+    if (state.stage !== 2) return;
+    if (!document.fullscreenElement) {
+      setFullscreenGate(true);
+      if (state.recording) {
+        await customStopRecording(true);
+      }
+    } else {
+      setFullscreenGate(false);
+    }
+    updateActionLocks();
+  });
+
+  window.addEventListener("beforeunload", () => {
+    if (state.stage === 2 && state.v2.currentSessionId) {
+      persistCurrentSession("draft");
+    }
+  });
+
+  state.v2.autoSaveTimer = setInterval(() => {
+    if (state.stage === 2 && state.v2.currentSessionId) {
+      persistCurrentSession("draft");
+    }
+  }, AUTOSAVE_INTERVAL_MS);
+
+  loadV2History();
+  renderAgendaList();
+  updateStage2Panels();
+  updateActionLocks();
+
+  const activeId = localStorage.getItem(ACTIVE_SESSION_KEY);
+  if (activeId) {
+    const active = state.v2.history.find((item) => item.id === activeId && item.isDraft);
+    if (active) {
+      const shouldRestore = confirm(`Continue previous draft session \"${active.name}\"?`);
+      if (shouldRestore) {
+        continueSessionById(activeId).catch((error) => {
+          console.error(error);
+        });
+      }
+    }
+  }
+})();
+    </script>
   </body>
 </html>
